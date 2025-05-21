@@ -1,4 +1,5 @@
-import { login, logout, getInfo } from '@/api/user'
+// src/store/modules/user.js
+import { login, logout, getInfo, register, updateUserProfile } from '@/api/user'
 import { getToken, setToken, removeToken } from '@/utils/auth'
 import router, { resetRouter } from '@/router'
 
@@ -7,7 +8,9 @@ const state = {
   name: '',
   avatar: '',
   introduction: '',
-  roles: []
+  roles: [],
+  email: '', // Added email
+  userId: '' // Added userId
 }
 
 const mutations = {
@@ -25,6 +28,12 @@ const mutations = {
   },
   SET_ROLES: (state, roles) => {
     state.roles = roles
+  },
+  SET_EMAIL: (state, email) => { // Added mutation for email
+    state.email = email
+  },
+  SET_USER_ID: (state, userId) => { // Added mutation for userId
+    state.userId = userId
   }
 }
 
@@ -54,7 +63,7 @@ const actions = {
           reject('Verification failed, please Login again.')
         }
 
-        const { roles, name, avatar, introduction } = data
+        const { roles, name, avatar, introduction, email, id } = data // Assuming id and email are returned
 
         // roles must be a non-empty array
         if (!roles || roles.length <= 0) {
@@ -65,6 +74,8 @@ const actions = {
         commit('SET_NAME', name)
         commit('SET_AVATAR', avatar)
         commit('SET_INTRODUCTION', introduction)
+        commit('SET_EMAIL', email || '') // Set email
+        commit('SET_USER_ID', id || '') // Set user ID
         resolve(data)
       }).catch(error => {
         reject(error)
@@ -78,6 +89,11 @@ const actions = {
       logout(state.token).then(() => {
         commit('SET_TOKEN', '')
         commit('SET_ROLES', [])
+        commit('SET_NAME', '')
+        commit('SET_AVATAR', '')
+        commit('SET_INTRODUCTION', '')
+        commit('SET_EMAIL', '')
+        commit('SET_USER_ID', '')
         removeToken()
         resetRouter()
 
@@ -120,6 +136,39 @@ const actions = {
 
     // reset visited views and cached views
     dispatch('tagsView/delAllViews', null, { root: true })
+  },
+
+  // New action for user registration
+  register({ commit }, userInfo) {
+    return new Promise((resolve, reject) => {
+      register(userInfo).then(response => {
+        // const { data } = response
+        // If registration returns a token for auto-login:
+        // commit('SET_TOKEN', data.token)
+        // setToken(data.token)
+        resolve(response) // Resolve with the full response or specific data
+      }).catch(error => {
+        reject(error)
+      })
+    })
+  },
+
+  // New action for updating user profile
+  updateProfile({ commit, dispatch }, profileData) {
+    return new Promise((resolve, reject) => {
+      updateUserProfile(profileData).then(response => {
+        // After successful update, you might want to refresh user info
+        dispatch('getInfo').then(userData => {
+          resolve(userData) // Resolve with updated user data
+        }).catch(error => {
+          // Even if getInfo fails after update, the update itself was successful
+          console.warn('Profile updated, but failed to refresh user info immediately:', error)
+          resolve(response) // Resolve with the update response
+        })
+      }).catch(error => {
+        reject(error)
+      })
+    })
   }
 }
 

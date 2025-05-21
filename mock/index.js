@@ -1,43 +1,42 @@
-const Mock = require('mockjs')
-const { param2Obj } = require('./utils')
+// mock/index.js
+import Mock from 'mockjs'
+import user from './user' // Existing
+import role from './role' // Existing
+import article from './article' // Existing
+import search from './remote-search' // Existing
+// ... other existing imports
 
-const user = require('./user')
-const role = require('./role')
-const article = require('./article')
-const search = require('./remote-search')
-// const domestic = require('./domestic') // Assuming this is old/renamed
-// const international = require('./international') // Assuming this is old/renamed
-// const amendments = require('./amendments') // Assuming this is old/renamed
-const userManager = require('./user-manager') // Keep if still relevant for admin users
-const customerDomestic = require('./customer-domestic') // Replaced by customer.js
-// const customerInternational = require('./customer-international') // Replaced by customer.js
+// New imports for logistics modules
+import inbound from './inbound'
+import outbound from './outbound'
+import dispatch from './dispatch'
+import supplyChain from './supplyChain'
+import tracking from './tracking'
+import dataAnalysis from './dataAnalysis'
+import logManagement from './logManagement'
 
-// New Mocks
-const customer = require('./customer')
-const ledger = require('./ledger')
-const dataAnalysis = require('./dataAnalysis')
-const log = require('./log')
 
 const mocks = [
   ...user,
   ...role,
-  ...article, // Keep if example pages are desired
-  ...search,  // Keep if remote search examples are desired
-  ...userManager,
-  // ...domestic, // Comment out or remove if replaced
-  // ...international,
-  // ...amendments,
-  ...customerDomestic,
-  // ...customerInternational,
-  ...customer,     // Add new customer mock
-  ...ledger,       // Add new ledger mock
-  ...dataAnalysis, // Add new dataAnalysis mock
-  ...log           // Add new log mock
+  ...article,
+  ...search,
+  // ... other existing mocks
+
+  // Add new logistics mocks
+  ...inbound,
+  ...outbound,
+  ...dispatch,
+  ...supplyChain,
+  ...tracking,
+  ...dataAnalysis,
+  ...logManagement
 ]
 
-// ... (rest of the file remains the same) ...
-
-function mockXHR() {
+// for front mock
+// please use it cautiously, it will redefine XMLHttpRequest,
+// which will cause many of your third-party libraries to be invalidated (like progress event).
+export function mockXHR() {
   // mock patch
   // https://github.com/nuysoft/Mock/issues/300
   Mock.XHR.prototype.proxy_send = Mock.XHR.prototype.send
@@ -60,7 +59,7 @@ function mockXHR() {
         // https://expressjs.com/en/4x/api.html#req
         result = respond({
           method: type,
-          body: JSON.parse(body || '{}'), // Ensure body is parsed, handle empty body
+          body: JSON.parse(body),
           query: param2Obj(url)
         })
       } else {
@@ -75,7 +74,36 @@ function mockXHR() {
   }
 }
 
-module.exports = {
-  mocks,
-  mockXHR
+// for mock server
+const responseFake = (url, type, respond) => {
+  return {
+    url: new RegExp(`/mock${url}`), // Adjust if your mock server prefix is different
+    type: type || 'get',
+    response(req, res) {
+      res.json(Mock.mock(respond instanceof Function ? respond(req, res) : respond))
+    }
+  }
+}
+
+export default mocks.map(route => {
+  return responseFake(route.url, route.type, route.response)
+})
+
+// Utility function if not already present in your mock/index.js or utils
+function param2Obj(url) {
+  const search = decodeURIComponent(url.split('?')[1]).replace(/^\?/, '')
+  if (!search) {
+    return {}
+  }
+  const obj = {}
+  const searchArr = search.split('&')
+  searchArr.forEach(v => {
+    const index = v.indexOf('=')
+    if (index !== -1) {
+      const name = v.substring(0, index)
+      const val = v.substring(index + 1, v.length)
+      obj[name] = val
+    }
+  })
+  return obj
 }

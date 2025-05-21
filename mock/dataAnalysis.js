@@ -1,52 +1,45 @@
-const Mock = require('mockjs')
+// mock/dataAnalysis.js
+import Mock from 'mockjs'
 
-// Helper function to get 'YYYY-MM' format
-function getYearMonth(year, month) {
-  return `${year}-${month < 10 ? '0' : ''}${month}`
+// Generate data for the last 2 years (24 months)
+const generateMonthlyData = (years = 2) => {
+  const data = []
+  const now = new Date()
+  for (let i = years * 12 -1; i >= 0; i--) {
+    const date = new Date(now.getFullYear(), now.getMonth() - i, 1)
+    const monthStr = `${date.getFullYear()}-${('0' + (date.getMonth() + 1)).slice(-2)}`
+    data.push({
+      month: monthStr,
+      count: Mock.Random.integer(50, 500) // Random order count
+    })
+  }
+  return data
 }
 
-const yearsToCover = [2023, 2024]; // 固定年份
 
-// --- Data for: 2023年和2024年每月的客户人数 ---
-const customerMonthlyData = []
-yearsToCover.forEach(year => {
-  for (let m = 1; m <= 12; m++) {
-    customerMonthlyData.push({
-      month: getYearMonth(year, m),
-      customerCount: Mock.Random.integer(50, 500) // 随机客户数
-    })
-  }
-});
-
-// --- Data for: 2023年和2024年境内每月台账金额 ---
-const ledgerMonthlyAmountData = []
-yearsToCover.forEach(year => {
-  for (let m = 1; m <= 12; m++) {
-    ledgerMonthlyAmountData.push({
-      month: getYearMonth(year, m),
-      amount: Mock.Random.float(50000, 1000000, 2, 2) // 随机金额
-    })
-  }
-});
-
-module.exports = [
+export default [
   {
-    url: '/api/analysis/customerMonthlyCount', // 与 API 调用一致
+    url: '/logistics/data-analysis/inbound-stats',
     type: 'get',
     response: _ => {
       return {
         code: 20000,
-        data: customerMonthlyData
+        data: {
+          monthlyData: generateMonthlyData(2)
+        }
       }
     }
   },
   {
-    url: '/api/analysis/domesticLedgerMonthlyAmount', // 与 API 调用一致
+    url: '/logistics/data-analysis/outbound-stats',
     type: 'get',
-    response: _ => {
+    response: config => {
+      // const { region } = config.query // 'domestic' or other regions
       return {
         code: 20000,
-        data: ledgerMonthlyAmountData
+        data: {
+          monthlyData: generateMonthlyData(2) // For simplicity, same data structure
+        }
       }
     }
   }

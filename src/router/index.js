@@ -1,42 +1,11 @@
-// src/router/index.js
 import Vue from 'vue'
 import Router from 'vue-router'
 
 Vue.use(Router)
 
-/* Layout */
+/* 布局组件 */
 import Layout from '@/layout'
 
-/* Router Modules */
-// ... other router modules like componentsRouter, chartsRouter, etc.
-import logisticsRouter from './modules/logistics' // Import the new logistics router
-
-/**
- * Note: sub-menu only appear when route children.length >= 1
- * Detail see: https://panjiachen.github.io/vue-element-admin-site/guide/essentials/router-and-nav.html
- *
- * hidden: true                   if set true, item will not show in the sidebar(default is false)
- * alwaysShow: true               if set true, will always show the root menu
- * if not set alwaysShow, when item has more than one children route,
- * it will becomes nested mode, otherwise not show the root menu
- * redirect: noRedirect           if set noRedirect will no redirect in the breadcrumb
- * name:'router-name'             the name is used by <keep-alive> (must set!!!)
- * meta : {
-    roles: ['admin','editor']    control page roles (you can set multiple roles)
-    title: 'title'               the name show in sidebar and breadcrumb (recommend set)
-    icon: 'svg-name'/'el-icon-x' the icon show in the sidebar
-    noCache: true                if set true, the page will no be cached(default is false)
-    affix: true                  if set true, the tag will affix in the tags-view
-    breadcrumb: false            if set false, the item will hidden in breadcrumb(default is true)
-    activeMenu: '/example/list'  if set path, the sidebar will highlight the path you set
-  }
- */
-
-/**
- * constantRoutes
- * a base page that does not have permission requirements
- * all roles can be accessed
- */
 export const constantRoutes = [
   {
     path: '/redirect',
@@ -55,7 +24,7 @@ export const constantRoutes = [
     hidden: true
   },
   {
-    path: '/register', // New Registration Route
+    path: '/register',
     component: () => import('@/views/register/index'),
     hidden: true
   },
@@ -83,49 +52,119 @@ export const constantRoutes = [
         path: 'dashboard',
         component: () => import('@/views/dashboard/index'),
         name: 'Dashboard',
-        meta: { title: '首页', icon: 'dashboard', affix: true } // Dashboard
+        meta: { title: '首页', icon: 'dashboard', affix: true }
+      }
+    ]
+  },
+  // {
+  //   path: '/user-manage',
+  //   component: Layout,
+  //   children: [{
+  //     path: 'index',
+  //     component: () => import('@/views/user-manager/index'),
+  //     name: 'UserAccountManagement',
+  //     meta: {
+  //       title: '后台用户管理',
+  //       icon: 'user' // SVG icon
+  //     }
+  //   }]
+  // },
+  {
+    path: '/customer',
+    component: Layout,
+    redirect: '/customer/index',
+    name: 'CustomerManagement',
+    meta: {
+      title: '客户管理',
+      icon: 'peoples' // SVG icon
+    },
+    children: [
+      {
+        path: 'index',
+        component: () => import('@/views/customer/index'),
+        name: 'CustomerList',
+        meta: { title: '客户管理' } // 子菜单通常不单独显示图标在侧边栏
       }
     ]
   },
   {
-    path: '/profile', // New Profile Route
+    path: '/ledger',
     component: Layout,
-    redirect: '/profile/index',
-    hidden: true,
+    redirect: '/ledger/list',
+    name: 'LedgerManagement',
+    meta: {
+      title: '台账管理',
+      icon: 'form' // SVG icon
+    },
     children: [
       {
-        path: 'index',
-        component: () => import('@/views/profile/index'),
-        name: 'Profile',
-        meta: { title: '个人中心', icon: 'user', noCache: true } // Profile
+        path: 'list',
+        component: () => import('@/views/ledger/index'),
+        name: 'LedgerList',
+        meta: { title: '台账管理' }
       }
     ]
   }
-  // You can add other constant routes here
+  // ... (其他可能存在的 constantRoutes)
 ]
 
-/**
- * asyncRoutes
- * the routes that need to be dynamically loaded based on user roles
- */
 export const asyncRoutes = [
-  // ... your other async routes (like permission roles, components, charts etc.)
-
-  logisticsRouter, // Add the logistics router here
-
-  // 404 page must be placed at the end !!!
+  {
+    path: '/line', // 此路由现在用于 “客户月度占比”
+    component: Layout,
+    children: [{
+      path: '',
+      component: () => import('@/views/charts/line'),
+      name: 'CustomerMonthlyPercentage',
+      meta: {
+        icon: 'peoples', // SVG icon
+        title: '客户月度占比',
+        noCache: true
+      }
+    }]
+  },
+  {
+    path: '/baifen', // 此路由现在用于 “境内台账月度金额占比”
+    component: Layout,
+    children: [{
+      path: '',
+      component: () => import('@/views/charts/baifen'),
+      name: 'LedgerMonthlyAmountPercentage',
+      meta: {
+        icon: 'money', // SVG icon
+        title: '境内台账月度金额占比',
+        noCache: true
+      }
+    }]
+  },
+  // 日志管理 - 图标已更新
+  {
+    path: '/log',
+    component: Layout,
+    children: [
+      {
+        path: 'list',
+        component: () => import('@/views/log/index'),
+        name: 'LogManagement',
+        meta: { title: '日志管理', icon: 'clipboard' } // <--- 修改图标为 'clipboard' (SVG图标)
+      }
+    ]
+  },
+  // 404页面必须放在最后
   { path: '*', redirect: '/404', hidden: true }
 ]
 
 const createRouter = () => new Router({
-  // mode: 'history', // require service support
+  mode: 'hash',
   scrollBehavior: () => ({ y: 0 }),
+  // 将常量路由和异步路由合并，或者根据您的权限逻辑决定如何组合
+  // 如果所有路由都是固定的，可以直接 routes: [...constantRoutes, ...asyncRoutes]
+  // 但通常 asyncRoutes 是在用户登录后根据权限动态添加的
   routes: constantRoutes
 })
 
 const router = createRouter()
 
-// Detail see: https://github.com/vuejs/vue-router/issues/1234#issuecomment-357941465
 export function resetRouter() {
   const newRouter = createRouter()
   router.matcher = newRouter.matcher // reset router

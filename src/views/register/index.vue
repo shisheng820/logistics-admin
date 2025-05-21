@@ -3,7 +3,7 @@
     <el-form ref="registerForm" :model="registerForm" :rules="registerRules" class="register-form" auto-complete="on" label-position="left">
 
       <div class="title-container">
-        <h3 class="title">游艇旅游台账系统注册</h3>
+        <h3 class="title">智能物流管理系统注册</h3>
       </div>
 
       <el-form-item prop="username">
@@ -34,7 +34,6 @@
           name="password"
           tabindex="2"
           auto-complete="on"
-          @keyup.enter.native="handleRegister"
         />
         <span class="show-pwd" @click="showPwd">
           <svg-icon :icon-class="passwordType === 'password' ? 'eye' : 'eye-open'" />
@@ -57,26 +56,60 @@
           @keyup.enter.native="handleRegister"
         />
       </el-form-item>
+      <el-form-item prop="name">
+        <span class="svg-container">
+          <svg-icon icon-class="user" />
+        </span>
+        <el-input
+          ref="name"
+          v-model="registerForm.name"
+          placeholder="姓名/昵称"
+          name="name"
+          type="text"
+          tabindex="4"
+        />
+      </el-form-item>
+      <el-form-item prop="email">
+        <span class="svg-container">
+          <i class="el-icon-message" />
+        </span>
+        <el-input
+          ref="email"
+          v-model="registerForm.email"
+          placeholder="邮箱 (可选)"
+          name="email"
+          type="text"
+          tabindex="5"
+        />
+      </el-form-item>
 
-      <el-button :loading="loading" type="primary" style="width:100%;margin-bottom:30px;" @click.native.prevent="handleRegister">
+      <el-button :loading="loading" type="primary" style="width:100%;margin-bottom:20px;" @click.native.prevent="handleRegister">
         注册
       </el-button>
 
-      <div style="position:relative">
-        <router-link to="/login" class="link-to-login">
-          已有账户？去登录
-        </router-link>
+      <div style="text-align:right;">
+        <el-link type="primary" @click="$router.push('/login')">已有账号？去登录</el-link>
       </div>
     </el-form>
   </div>
 </template>
 
 <script>
-// import { validUsername } from '@/utils/validate' // You might need custom validation
+import { validUsername, isValidEmail } from '@/utils/validate' // Assuming you have these or similar
+import { register } from '@/api/user'
 
 export default {
   name: 'Register',
   data() {
+    const validateUsername = (rule, value, callback) => {
+      if (!value) {
+        callback(new Error('请输入用户名'))
+      } else if (!validUsername(value)) { // Use your own validation if needed
+        callback(new Error('用户名格式不正确 (例如: 字母开头, 3-16位)'))
+      } else {
+        callback()
+      }
+    }
     const validatePassword = (rule, value, callback) => {
       if (value.length < 6) {
         callback(new Error('密码不能少于6位'))
@@ -85,8 +118,17 @@ export default {
       }
     }
     const validateConfirmPassword = (rule, value, callback) => {
-      if (value !== this.registerForm.password) {
-        callback(new Error('两次输入的密码不一致'))
+      if (value === '') {
+        callback(new Error('请再次输入密码'))
+      } else if (value !== this.registerForm.password) {
+        callback(new Error('两次输入密码不一致!'))
+      } else {
+        callback()
+      }
+    }
+    const validateEmail = (rule, value, callback) => {
+      if (value && !isValidEmail(value)) {
+        callback(new Error('请输入正确的邮箱地址'))
       } else {
         callback()
       }
@@ -95,12 +137,16 @@ export default {
       registerForm: {
         username: '',
         password: '',
-        confirmPassword: ''
+        confirmPassword: '',
+        name: '',
+        email: ''
       },
       registerRules: {
-        username: [{ required: true, trigger: 'blur', message: '请输入用户名' }],
+        username: [{ required: true, trigger: 'blur', validator: validateUsername }],
         password: [{ required: true, trigger: 'blur', validator: validatePassword }],
-        confirmPassword: [{ required: true, trigger: 'blur', validator: validateConfirmPassword }]
+        confirmPassword: [{ required: true, trigger: 'blur', validator: validateConfirmPassword }],
+        name: [{ required: true, message: '请输入姓名或昵称', trigger: 'blur' }],
+        email: [{ trigger: 'blur', validator: validateEmail }]
       },
       loading: false,
       passwordType: 'password',
@@ -130,17 +176,21 @@ export default {
       this.$refs.registerForm.validate(valid => {
         if (valid) {
           this.loading = true
-          // Replace with actual registration API call
-          // This is a mock, in a real app, you'd dispatch to a Vuex action
-          // that calls your registration API.
-          setTimeout(() => {
+          register(this.registerForm).then(response => { // Use the register API call
             this.$message.success('注册成功！请登录。')
             this.loading = false
-            this.$router.push({ path: this.redirect || '/login' })
-          }, 1000)
-          // .catch(() => {
-          //   this.loading = false
-          // })
+            // Optionally auto-login or redirect to login
+            // this.$store.dispatch('user/login', { username: this.registerForm.username, password: this.registerForm.password }).then(() => {
+            //   this.$router.push({ path: this.redirect || '/' })
+            // }).catch(() => {
+            //   this.loading = false
+            // })
+            this.$router.push({ path: '/login' })
+          }).catch(error => {
+            // Error message is usually handled by the request interceptor
+            console.error('Registration failed:', error)
+            this.loading = false
+          })
         } else {
           console.log('error submit!!')
           return false
@@ -152,7 +202,7 @@ export default {
 </script>
 
 <style lang="scss">
-/* Styles copied and adapted from login/index.vue */
+// Styles are similar to login page, ensure they are scoped or globally available
 $bg:#283443;
 $light_gray:#fff;
 $cursor: #fff;
@@ -210,7 +260,7 @@ $light_gray:#eee;
     position: relative;
     width: 520px;
     max-width: 100%;
-    padding: 160px 35px 0;
+    padding: 100px 35px 0; // Adjusted padding for more fields
     margin: 0 auto;
     overflow: hidden;
   }
@@ -255,14 +305,6 @@ $light_gray:#eee;
     color: $dark_gray;
     cursor: pointer;
     user-select: none;
-  }
-  .link-to-login {
-    color: $light_gray;
-    font-size: 14px;
-    text-decoration: underline;
-    &:hover {
-      color: #409EFF;
-    }
   }
 }
 </style>

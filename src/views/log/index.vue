@@ -1,5 +1,29 @@
 <template>
   <div class="app-container">
+    <div class="filter-container">
+      <el-input v-model="listQuery.username" placeholder="用户名" style="width: 150px;" class="filter-item" @keyup.enter.native="handleFilter" />
+      <el-input v-model="listQuery.operation" placeholder="操作" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
+      <el-select v-model="listQuery.status" placeholder="状态" clearable style="width: 120px" class="filter-item">
+        <el-option v-for="item in statusOptions" :key="item" :label="item" :value="item" />
+      </el-select>
+      <el-date-picker
+        v-model="listQuery.daterange"
+        type="datetimerange"
+        range-separator="至"
+        start-placeholder="开始日期"
+        end-placeholder="结束日期"
+        value-format="yyyy-MM-dd HH:mm:ss"
+        class="filter-item"
+        style="width: 380px;"
+      />
+      <el-button v-waves class="filter-item" type="primary" icon="el-icon-search" @click="handleFilter">
+        搜索
+      </el-button>
+      <el-button v-waves :loading="downloadLoading" class="filter-item" type="primary" icon="el-icon-download" @click="handleDownload">
+        导出
+      </el-button>
+    </div>
+
     <el-table
       :key="tableKey"
       v-loading="listLoading"
@@ -8,57 +32,56 @@
       fit
       highlight-current-row
       style="width: 100%;"
-      :default-sort="{prop: 'timestamp', order: 'descending'}"
       @sort-change="sortChange"
     >
-      <el-table-column label="ID" prop="id" sortable="custom" align="center" width="80">
+      <el-table-column label="ID" prop="id" sortable="custom" align="center" width="80" :class-name="getSortClass('id')">
         <template slot-scope="{row}">
           <span>{{ row.id }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="时间" prop="timestamp" sortable="custom" align="center" width="180">
+      <el-table-column label="时间戳" prop="timestamp" sortable="custom" width="160px" align="center" :class-name="getSortClass('timestamp')">
         <template slot-scope="{row}">
-          <span>{{ row.timestamp }}</span>
+          <span>{{ row.timestamp | parseTime('{y}-{m}-{d} {h}:{i}:{s}') }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="操作用户" prop="user" align="center" width="150" :show-overflow-tooltip="true">
+      <el-table-column label="用户名" prop="username" width="120px" align="center">
         <template slot-scope="{row}">
-          <span>{{ row.user }}</span>
+          <span>{{ row.username }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="IP地址" prop="ipAddress" align="center" width="140">
+      <el-table-column label="IP地址" prop="ipAddress" width="130px" align="center">
         <template slot-scope="{row}">
           <span>{{ row.ipAddress }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="操作类型" prop="operation" align="center" width="150" :show-overflow-tooltip="true">
+      <el-table-column label="操作" prop="operation" min-width="150px">
         <template slot-scope="{row}">
           <span>{{ row.operation }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="详细信息" prop="details" min-width="250" :show-overflow-tooltip="true">
+      <el-table-column label="详情" prop="details" min-width="200px">
         <template slot-scope="{row}">
           <span>{{ row.details }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="center" width="100" class-name="small-padding fixed-width">
-        <template slot-scope="{row, $index}">
-          <el-button size="mini" type="danger" icon="el-icon-delete" @click="handleDelete(row, $index)">
-            删除
-          </el-button>
+      <el-table-column label="状态" prop="status" class-name="status-col" width="100">
+        <template slot-scope="{row}">
+          <el-tag :type="row.status === '成功' ? 'success' : 'danger'">
+            {{ row.status }}
+          </el-tag>
         </template>
       </el-table-column>
     </el-table>
 
     <pagination v-show="total>0" :total="total" :page.sync="listQuery.page" :limit.sync="listQuery.limit" @pagination="getList" />
-
   </div>
 </template>
 
 <script>
-import { fetchLogList, deleteLog } from '@/api/log'
-import Pagination from '@/components/Pagination'
-import waves from '@/directive/waves'
+import { fetchLogList } from '@/api/log'
+import waves from '@/directive/waves' // waves directive
+import { parseTime } from '@/utils'
+import Pagination from '@/components/Pagination' // secondary package based on el-pagination
 
 export default {
   name: 'LogTable',
@@ -72,12 +95,15 @@ export default {
       listLoading: true,
       listQuery: {
         page: 1,
-        limit: 10,
-        user: undefined,
+        limit: 20,
+        username: undefined,
         operation: undefined,
-        dateRange: [],
-        sort: '-timestamp'
-      }
+        status: undefined,
+        daterange: [], // [startTime, endTime]
+        sort: '-id' // Default sort by ID descending (implies timestamp descending)
+      },
+      statusOptions: ['成功', '失败'],
+      downloadLoading: false
     }
   },
   created() {
@@ -86,112 +112,67 @@ export default {
   methods: {
     getList() {
       this.listLoading = true
-      const queryParams = { ...this.listQuery }
-      if (queryParams.dateRange && queryParams.dateRange.length === 2) {
-        queryParams.startTime = queryParams.dateRange[0]
-        queryParams.endTime = queryParams.dateRange[1]
-      }
-      delete queryParams.dateRange
-
-      // 返回Promise，以便链式调用或await
-      return fetchLogList(queryParams).then(response => {
+      fetchLogList(this.listQuery).then(response => {
         this.list = response.data.items
         this.total = response.data.total
         this.listLoading = false
-        // return response; // 可以选择返回response，如果后续then需要它
-      }).catch((err) => {
-        this.listLoading = false
-        console.error('获取日志列表失败:', err)
-        // return Promise.reject(err); // 将错误继续传递下去
       })
     },
     handleFilter() {
       this.listQuery.page = 1
       this.getList()
     },
-    resetFilters() {
-      this.listQuery = {
-        page: 1,
-        limit: 10,
-        user: undefined,
-        operation: undefined,
-        dateRange: [],
-        sort: '-timestamp'
-      }
-      this.getList()
-    },
     sortChange(data) {
       const { prop, order } = data
       if (prop === 'id') {
-        this.listQuery.sort = order === 'ascending' ? '+id' : '-id'
+        this.sortByID(order)
       } else if (prop === 'timestamp') {
-        this.listQuery.sort = order === 'ascending' ? '+timestamp' : '-timestamp'
+        this.sortByTimestamp(order)
+      }
+    },
+    sortByID(order) {
+      if (order === 'ascending') {
+        this.listQuery.sort = '+id'
+      } else {
+        this.listQuery.sort = '-id'
       }
       this.handleFilter()
     },
-    async handleDelete(row, index) { // 使用 async/await 简化
-      try {
-        await this.$confirm('确认删除这条日志吗?', '提示', {
-          confirmButtonText: '确定',
-          cancelButtonText: '取消',
-          type: 'warning'
-        })
-
-        // 用户点击“确定”
-        this.listLoading = true
-
-        // 检查 deleteLog 是否为函数
-        if (typeof deleteLog !== 'function') {
-          console.error('deleteLog is not a function!', deleteLog)
-          this.$notify({
-            title: '代码错误',
-            message: '删除功能配置不正确，请联系管理员。',
-            type: 'error',
-            duration: 3000
-          })
-          this.listLoading = false
-          return // 提前退出
-        }
-
-        const deleteResponse = await deleteLog(row.id)
-        this.$notify({
-          title: '成功',
-          message: (deleteResponse && deleteResponse.message) || '删除成功',
-          type: 'success',
-          duration: 2000
-        })
-
-        await this.getList() // 刷新列表，getList 内部会处理 listLoading
-      } catch (actionOrError) { // 这个 catch 会捕获 $confirm 的拒绝 (cancel) 和上面 try 块中的任何错误
-        if (actionOrError === 'cancel') {
-          this.$message({
-            type: 'info',
-            message: '已取消删除'
-          })
-        } else {
-          // 如果不是 'cancel'，则认为是执行删除或刷新列表过程中发生的错误
-          console.error('删除操作过程中发生错误:', actionOrError)
-          this.$notify({
-            title: '操作失败',
-            message: '删除日志或刷新列表时发生错误。',
-            type: 'error',
-            duration: 2000
-          })
-        }
-        // 无论如何，确保加载状态被重置
-        this.listLoading = false
+    sortByTimestamp(order) {
+      if (order === 'ascending') {
+        this.listQuery.sort = '+timestamp'
+      } else {
+        this.listQuery.sort = '-timestamp'
       }
+      this.handleFilter()
+    },
+    handleDownload() {
+      this.downloadLoading = true
+      import('@/vendor/Export2Excel').then(excel => {
+        const tHeader = ['ID', '时间戳', '用户名', 'IP地址', '操作', '详情', '状态']
+        const filterVal = ['id', 'timestamp', 'username', 'ipAddress', 'operation', 'details', 'status']
+        const data = this.formatJson(filterVal)
+        excel.export_json_to_excel({
+          header: tHeader,
+          data,
+          filename: '日志列表-' + parseTime(new Date(), '{y}{m}{d}{h}{i}{s}')
+        })
+        this.downloadLoading = false
+      })
+    },
+    formatJson(filterVal) {
+      return this.list.map(v => filterVal.map(j => {
+        if (j === 'timestamp') {
+          return parseTime(v[j])
+        } else {
+          return v[j]
+        }
+      }))
+    },
+    getSortClass: function(key) {
+      const sort = this.listQuery.sort
+      return sort === `+${key}` ? 'ascending' : sort === `-${key}` ? 'descending' : ''
     }
   }
 }
 </script>
-
-<style scoped>
-.filter-container {
-  padding-bottom: 10px;
-}
-.filter-item {
-  margin-right: 10px;
-  margin-bottom: 10px;
-}
-</style>

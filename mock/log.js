@@ -1,6 +1,24 @@
 const Mock = require('mockjs')
 const { Random } = Mock
 
+// --- Time Generation Helpers ---
+const START_DATE_STR = '2024-01-01T00:00:00.000Z';
+const startDate = new Date(START_DATE_STR).getTime();
+const currentDate = Date.now();
+const TIME_RANGE = currentDate - startDate;
+
+function generatePrimaryTimestamp(reverseIndex, totalCount) {
+  if (totalCount <= 0) return currentDate;
+  if (totalCount === 1) return startDate + TIME_RANGE / 2;
+  const timePortion = reverseIndex / Math.max(1, totalCount - 1);
+  return startDate + timePortion * TIME_RANGE;
+}
+
+function formatTimestamp(timestamp) {
+  return new Date(timestamp).toISOString().slice(0, 19).replace('T', ' ');
+}
+// --- End of Time Generation Helpers ---
+
 const list = []
 const count = 200 // Number of mock log entries
 
@@ -11,9 +29,13 @@ const logOperations = [
 const userNames = ['admin', 'editor', '张三', '李四', '王五']
 
 for (let i = 0; i < count; i++) {
+  const id = count - i;
+  const reverseIndexForTime = count - 1 - i;
+  const logTimestamp = generatePrimaryTimestamp(reverseIndexForTime, count);
+
   list.push(Mock.mock({
-    id: '@increment',
-    timestamp: '@datetime("yyyy-MM-dd HH:mm:ss")',
+    id: id,
+    timestamp: formatTimestamp(logTimestamp),
     username: Random.pick(userNames),
     ipAddress: '@ip',
     operation: Random.pick(logOperations),
@@ -21,6 +43,7 @@ for (let i = 0; i < count; i++) {
     status: Random.pick(['成功', '失败'])
   }))
 }
+// List is naturally sorted by ID desc, and thus by timestamp desc (most recent first)
 
 module.exports = [
   {
@@ -34,22 +57,32 @@ module.exports = [
         if (operation && item.operation.indexOf(operation) < 0) return false
         if (status && item.status !== status) return false
         if (daterange && daterange.length === 2) {
-          const startTime = new Date(daterange[0]).getTime()
-          const endTime = new Date(daterange[1]).getTime()
+          const startTimeFilter = new Date(daterange[0]).getTime()
+          const endTimeFilter = new Date(daterange[1]).setHours(23, 59, 59, 999); // Ensure end of day
           const itemTime = new Date(item.timestamp).getTime()
-          if (itemTime < startTime || itemTime > endTime) {
+          if (itemTime < startTimeFilter || itemTime > endTimeFilter) {
             return false
           }
         }
         return true
       })
 
-      if (sort === '-id' || sort === '-timestamp') { // Sort by timestamp descending
-        mockList.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-      } else if (sort === '+id' || sort === '+timestamp') {
-         mockList.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+      if (sort) {
+        const prop = sort.replace(/^[+-]/, '');
+        const order = sort.startsWith('-') ? -1 : 1;
+        mockList = [...mockList].sort((a, b) => {
+          let valA = a[prop];
+          let valB = b[prop];
+          if (prop === 'timestamp' || prop === 'id') { // ID is also numeric
+            valA = (prop === 'timestamp') ? new Date(valA).getTime() : Number(valA);
+            valB = (prop === 'timestamp') ? new Date(valB).getTime() : Number(valB);
+          }
+          if (valA < valB) return -1 * order;
+          if (valA > valB) return 1 * order;
+          return 0;
+        });
       }
-
+      // Default sort by ID desc (most recent timestamp first)
 
       const pageList = mockList.filter((item, index) => index < limit * page && index >= limit * (page - 1))
 
@@ -62,5 +95,4 @@ module.exports = [
       }
     }
   }
-  // No create/update/delete for logs usually from frontend
 ]

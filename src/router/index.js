@@ -128,24 +128,38 @@ export const asyncRoutes = [
     ]
   },
 
+  // Promoted User Management to a top-level route
   {
-    path: '/system',
+    path: '/user-management', // New parent path, ensure it's unique
     component: Layout,
-    redirect: '/system/user',
-    name: 'SystemManagement',
-    meta: { title: '系统管理', icon: 'el-icon-s-tools' },
+    redirect: '/user-management/list', // Point to its child
+    name: 'UserManagementRoot', // New unique name for the parent route
+    meta: { title: '用户管理', icon: 'el-icon-user' }, // Meta from original child
     children: [
       {
-        path: 'user',
-        name: 'UserManagement',
+        path: 'list', // Original child path, can be 'index' or kept as 'user'
+        name: 'UserManagement', // Original name
         component: () => import('@/views/system/user/index'),
-        meta: { title: '用户管理', icon: 'el-icon-user' }
-      },
+        // meta title can be removed if parent title is sufficient, or kept for breadcrumb
+        meta: { title: '用户列表' } // Or keep original '用户管理' if you prefer submenu to repeat parent
+      }
+    ]
+  },
+
+  // Promoted Log Management to a top-level route
+  {
+    path: '/log-management', // New parent path, ensure it's unique
+    component: Layout,
+    redirect: '/log-management/list', // Point to its child
+    name: 'LogManagementRoot', // New unique name for the parent route
+    meta: { title: '日志管理', icon: 'el-icon-notebook-2' }, // Meta from original child
+    children: [
       {
-        path: 'log',
-        name: 'LogManagement',
+        path: 'list', // Original child path, can be 'index' or kept as 'log'
+        name: 'LogManagement', // Original name
         component: () => import('@/views/system/log/index'),
-        meta: { title: '日志管理', icon: 'el-icon-notebook-2' }
+        // meta title can be removed if parent title is sufficient, or kept for breadcrumb
+        meta: { title: '日志列表' } // Or keep original '日志管理'
       }
     ]
   },

@@ -21,7 +21,8 @@
               class-name="nav-icon"
             />
             <i v-else-if="item.icon && item.icon.startsWith('el-icon-')" :class="item.icon + ' nav-icon'" />
-            <i v-else class="el-icon-menu nav-icon" /> </div>
+            <i v-else class="el-icon-menu nav-icon" />
+          </div>
           <h3>{{ item.title }}</h3>
         </div>
         <div class="nav-arrow">
@@ -43,43 +44,61 @@ export default {
       systemTitle: defaultSettings.title,
       // 更新 navItems 以匹配您最新的 router.js 配置
       navItems: [
-        // {
-        //   title: '后台用户管理', // 来自 router meta.title
-        //   icon: 'user', // 来自 router meta.icon
-        //   path: '/user-manage/index', // 完整的子路由路径
-        //   color: '#34bfa3' // 示例颜色，您可以自定义
-        // },
         {
-          title: '客户管理', // 使用父级路由的 title
-          icon: 'peoples', // 使用父级路由的 icon
-          path: '/customer/index', // 指向实际的列表页
-          color: '#40c9c6'
+          title: '入库管理', // from asyncRoutes
+          icon: 'el-icon-box', // from asyncRoutes meta.icon
+          path: '/inbound/list', // from asyncRoutes path + children path
+          color: '#40c9c6' // Example color
         },
         {
-          title: '台账管理', // 使用父级路由的 title
-          icon: 'form', // 使用父级路由的 icon
-          path: '/ledger/list', // 指向实际的列表页
+          title: '出库管理',
+          icon: 'el-icon-truck',
+          path: '/outbound/list',
           color: '#36a3f7'
         },
         {
-          title: '客户月度占比', // 来自 asyncRoutes meta.title
-          icon: 'peoples', // 来自 asyncRoutes meta.icon (与客户管理一致)
-          path: '/line', // 来自 asyncRoutes path (注意：这里path为空，实际导航是 /line)
+          title: '智能调度',
+          icon: 'el-icon-cpu',
+          path: '/dispatch/list',
           color: '#f4516c'
         },
         {
-          title: '境内台账月度金额占比', // 来自 asyncRoutes meta.title
-          icon: 'money', // 来自 asyncRoutes meta.icon
-          path: '/baifen', // 来自 asyncRoutes path (注意：这里path为空，实际导航是 /baifen)
+          title: '供应链管理',
+          icon: 'el-icon-connection',
+          path: '/supplychain/list',
           color: '#f6ab4d'
         },
         {
-          title: '日志管理', // 来自 asyncRoutes meta.title
-          icon: 'clipboard', // 来自 asyncRoutes meta.icon
-          path: '/log/list', // 指向实际的列表页
-          color: '#909399' // 示例颜色
+          title: '监控与追踪',
+          icon: 'el-icon-monitor',
+          path: '/tracking/list',
+          color: '#34bfa3'
+        },
+        {
+          title: '数据分析', // This is the parent route for charts
+          icon: 'chart', // From the parent /charts route meta
+          path: '/charts/line', // Point to the first chart, or a general charts overview if you have one
+          color: '#FFB549' // Example Color
+        },
+        // {
+        //   title: '系统管理', // Parent route for system management
+        //   icon: 'el-icon-s-tools',
+        //   path: '/system/user', // Default to user management or a system overview page
+        //   color: '#67C23A'
+        // },
+        // // You could also add individual system management sub-modules if preferred:
+        {
+          title: '用户管理',
+          icon: 'el-icon-user',
+          path: '/system/user',
+          color: '#E6A23C'
+        },
+        {
+          title: '日志管理',
+          icon: 'el-icon-notebook-2',
+          path: '/system/log',
+          color: '#909399'
         }
-        // 您可以根据需要添加更多导航项
       ]
     }
   },
@@ -123,10 +142,12 @@ $shadow-hover: rgba(0, 0, 0, 0.15);
     margin-bottom: 10px;
     font-weight: 600;
   }
+
   p {
     font-size: 16px;
     color: $text-secondary;
     margin-bottom: 0;
+
     .admin-name {
       font-weight: 500;
       color: var(--icon-color, $default-icon-color);
@@ -157,8 +178,9 @@ $shadow-hover: rgba(0, 0, 0, 0.15);
   &:hover {
     transform: translateY(-6px);
     box-shadow: 0 6px 16px $shadow-hover;
+
     .nav-arrow i {
-        color: var(--icon-color, $default-icon-color);
+      color: var(--icon-color, $default-icon-color);
     }
   }
 
@@ -168,20 +190,20 @@ $shadow-hover: rgba(0, 0, 0, 0.15);
     gap: 18px;
 
     .icon-wrapper {
-        background-color: rgba(var(--icon-color-rgb, 64, 158, 255), 0.1);
-        border-radius: 50%;
-        width: 56px;
-        height: 56px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: background-color 0.3s ease;
+      background-color: rgba(var(--icon-color-rgb, 64, 158, 255), 0.1);
+      border-radius: 50%;
+      width: 56px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background-color 0.3s ease;
 
-        .nav-icon {
-            font-size: 28px;
-            color: var(--icon-color, $default-icon-color);
-            transition: color 0.3s ease;
-        }
+      .nav-icon {
+        font-size: 28px;
+        color: var(--icon-color, $default-icon-color);
+        transition: color 0.3s ease;
+      }
     }
 
     h3 {
@@ -196,6 +218,7 @@ $shadow-hover: rgba(0, 0, 0, 0.15);
   .nav-arrow {
     align-self: flex-end;
     margin-top: 16px;
+
     i {
       font-size: 16px;
       color: #C0C4CC;
@@ -209,29 +232,37 @@ $shadow-hover: rgba(0, 0, 0, 0.15);
     grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
     gap: 16px;
   }
+
   .nav-card {
     padding: 20px;
+
     .nav-content {
-        gap: 12px;
-        .icon-wrapper {
-            width: 48px;
-            height: 48px;
-            .nav-icon {
-                font-size: 24px;
-            }
+      gap: 12px;
+
+      .icon-wrapper {
+        width: 48px;
+        height: 48px;
+
+        .nav-icon {
+          font-size: 24px;
         }
-        h3 {
-            font-size: 16px;
-        }
+      }
+
+      h3 {
+        font-size: 16px;
+      }
     }
   }
+
   .profile-section {
     padding: 20px;
+
     h1 {
-        font-size: 22px;
+      font-size: 22px;
     }
+
     p {
-        font-size: 15px;
+      font-size: 15px;
     }
   }
 }

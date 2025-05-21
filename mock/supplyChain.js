@@ -29,22 +29,36 @@ function formatTimestamp(timestamp) {
 const list = []
 const count = 30
 
+const supplierSuffixes = ['科技有限公司', '贸易有限公司', '实业发展公司', '集团', '物流服务部'];
+const contactTitles = ['经理', '主管', '采购代表', '业务员'];
+const commonOperators = ['采购专员A', '供应链分析师', '系统管理员', '张主管'];
+const remarkTemplates = [
+  '长期合作伙伴，信誉良好。', '主要供应 {category} 类物料。', '价格有竞争力，但交期偶有延迟。',
+  '小批量试合作供应商。', '月结 {days} 天。', '需提前 {leadTime} 天下单。', '质量稳定。'
+];
+const materialCategories = ['电子元件', '五金配件', '包装材料', '办公用品', '清洁用品'];
+
 for (let i = 0; i < count; i++) {
   const id = count - i;
   const reverseIndexForTime = count - 1 - i;
   const createTimestamp = generatePrimaryTimestamp(reverseIndexForTime, count);
-  const updateTimestamp = generateFutureTimestamp(createTimestamp, 0, 5); // Updated within 0-5 days of creation
+  const updateTimestamp = generateFutureTimestamp(createTimestamp, 1, 30); // Updated within 1-30 days of creation
+
+  const remark = Random.pick(remarkTemplates)
+                  .replace('{category}', Random.pick(materialCategories))
+                  .replace('{days}', Random.pick([30, 45, 60]))
+                  .replace('{leadTime}', Random.integer(3,15));
 
   list.push(Mock.mock({
     id: id,
-    supplierName: '@ctitle(4, 8)有限公司',
-    address: '@county(true)' + '@csentence(3,5)路@integer(1,100)号',
-    contactPerson: '@cname',
+    supplierName: Random.city() + Random.word(2,4) + Random.pick(supplierSuffixes),
+    address: '@county(true)' + Random.csentence(3,5) + '工业区' + Random.integer(1,10) + '栋',
+    contactPerson: Random.cname() + ' (' + Random.pick(contactTitles) + ')',
     contactPhone: /^1[3456789]\d{9}$/,
-    remarks: '@csentence(10, 30)',
+    remarks: remark,
     createTime: formatTimestamp(createTimestamp),
     updateTime: formatTimestamp(updateTimestamp),
-    operator: '@cname'
+    operator: Random.pick(commonOperators)
   }))
 }
 
@@ -55,8 +69,8 @@ module.exports = [
     response: config => {
       const { supplierName, contactPerson, page = 1, limit = 20, sort } = config.query
       let mockList = list.filter(item => {
-        if (supplierName && item.supplierName.indexOf(supplierName) < 0) return false
-        if (contactPerson && item.contactPerson.indexOf(contactPerson) < 0) return false
+        if (supplierName && !item.supplierName.includes(supplierName)) return false
+        if (contactPerson && !item.contactPerson.includes(contactPerson)) return false
         return true
       })
 
@@ -94,20 +108,19 @@ module.exports = [
       const data = config.body;
       const now = Date.now();
       const maxId = list.length > 0 ? Math.max(...list.map(item => item.id)) : 0;
-
       const createTimestamp = now;
-      const updateTimestamp = createTimestamp; // Initially same
+      const updateTimestamp = createTimestamp;
 
       const newItem = {
         id: maxId + 1,
-        supplierName: data.supplierName,
-        address: data.address,
-        contactPerson: data.contactPerson,
-        contactPhone: data.contactPhone,
-        remarks: data.remarks,
+        supplierName: data.supplierName || Random.city() + Random.word(2,4) + Random.pick(supplierSuffixes),
+        address: data.address || '@county(true)' + Random.csentence(3,5) + '工业区' + Random.integer(1,10) + '栋',
+        contactPerson: data.contactPerson || Random.cname() + ' (' + Random.pick(contactTitles) + ')',
+        contactPhone: data.contactPhone || `1${Random.string('number',10)}`,
+        remarks: data.remarks || Random.pick(remarkTemplates).replace('{category}', Random.pick(materialCategories)),
         createTime: formatTimestamp(createTimestamp),
         updateTime: formatTimestamp(updateTimestamp),
-        operator: data.operator || 'system_mock_create'
+        operator: data.operator || Random.pick(commonOperators)
       };
       list.unshift(newItem);
       return { code: 20000, data: { item: newItem }, message: '创建成功' };
@@ -122,7 +135,7 @@ module.exports = [
       if (itemIndex !== -1) {
         const originalCreateTime = list[itemIndex].createTime;
         list[itemIndex] = { ...list[itemIndex], ...data };
-        list[itemIndex].createTime = originalCreateTime; // Preserve original createTime
+        list[itemIndex].createTime = originalCreateTime;
         list[itemIndex].updateTime = formatTimestamp(Date.now());
         return { code: 20000, data: 'success', message: '更新成功' };
       }

@@ -29,28 +29,57 @@ function formatTimestamp(timestamp) {
 const list = []
 const count = 70
 
-const provinces = ['北京', '上海', '广东', '江苏', '浙江', '四川', '湖北', '山东']
-const cities = ['市', '区', '县'] // Simplified
+const provinces = ['北京', '上海', '广东', '江苏', '浙江', '四川', '湖北', '山东', '福建', '安徽'];
+const citySuffixes = ['市', '区', '县', '自治州'];
+const locationTypes = ['分拣中心', '中转站', '派送点', '航空枢纽', '铁路站点', '客户签收点'];
+const trackingRemarks = [
+  '货物已到达{location},准备下一轮派送。',
+  '正在进行安检扫描。',
+  '由于天气原因，运输略有延迟。',
+  '预计{time}送达。',
+  '已联系收件人，确认派送时间。',
+  '派送中，请保持电话畅通。',
+  '已签收，签收人：{signer}。',
+  '异常：包裹破损，待处理。',
+  '异常：地址不详，联系客户中。'
+];
+const signers = ['本人', '前台', '家属', '门卫'];
+const commonOperators = ['系统自动更新', '客服小李', '调度员老王', '快递员小张'];
+
 
 for (let i = 0; i < count; i++) {
   const id = count - i;
   const reverseIndexForTime = count - 1 - i;
-  const createTimestamp = generatePrimaryTimestamp(reverseIndexForTime, count);
-  const updateTimestamp = generateFutureTimestamp(createTimestamp, 0, 3); // Updated within 0-3 days
+  const createTimestamp = generatePrimaryTimestamp(reverseIndexForTime, count); // This is often when the tracking *starts* or order created
+  const updateTimestamp = generateFutureTimestamp(createTimestamp, 0, 3);    // Last update time
 
-  const prevAddress = Random.pick(provinces) + Random.pick(cities) + Random.csentence(2, 4) + '中转站'
-  const currentAddress = Random.pick(provinces) + Random.pick(cities) + Random.csentence(2, 4) + '派送点'
+  const prevLocationProvince = Random.pick(provinces);
+  const prevLocationCity = Random.pick(citySuffixes);
+  const prevLocationDetail = Random.csentence(2, 3) + Random.pick(locationTypes);
+  const prevAddress = prevLocationProvince + prevLocationCity + prevLocationDetail;
+
+  const currentLocationProvince = Random.pick(provinces.filter(p => p !== prevLocationProvince)); // Try a different province
+  const currentLocationCity = Random.pick(citySuffixes);
+  const currentLocationDetail = Random.csentence(2, 3) + Random.pick(locationTypes);
+  const currentAddress = currentLocationProvince + currentLocationCity + currentLocationDetail;
+  
+  const remark = Random.pick(trackingRemarks)
+                  .replace('{location}', currentAddress)
+                  .replace('{time}', Random.pick(['明天上午', '今天下午15:00前', '2小时内']))
+                  .replace('{signer}', Random.pick(signers));
+
+
   list.push(Mock.mock({
     id: id,
-    orderNumber: `TRK@integer(5000000, 5999999)`,
+    orderNumber: `TRK${Random.date('yyMMdd')}${Random.string('number', 5)}`,
     previousLocation: prevAddress,
     currentLocation: currentAddress,
     currentLocationContactPerson: '@cname',
     currentLocationContactPhone: /^1[3456789]\d{9}$/,
-    remarks: '状态: ' + Random.pick(['运输中', '派送中', '已签收', '异常']),
-    createTime: formatTimestamp(createTimestamp),
-    updateTime: formatTimestamp(updateTimestamp),
-    operator: '@cname'
+    remarks: remark,
+    createTime: formatTimestamp(createTimestamp), // When the order/tracking was initiated
+    updateTime: formatTimestamp(updateTimestamp), // Last status update time
+    operator: Random.pick(commonOperators)
   }))
 }
 
@@ -61,8 +90,8 @@ module.exports = [
     response: config => {
       const { orderNumber, currentLocation, page = 1, limit = 20, sort } = config.query
       let mockList = list.filter(item => {
-        if (orderNumber && item.orderNumber.indexOf(orderNumber) < 0) return false
-        if (currentLocation && item.currentLocation.indexOf(currentLocation) < 0) return false
+        if (orderNumber && !item.orderNumber.includes(orderNumber)) return false
+        if (currentLocation && !item.currentLocation.includes(currentLocation)) return false
         return true
       })
 
@@ -101,20 +130,20 @@ module.exports = [
       const now = Date.now();
       const maxId = list.length > 0 ? Math.max(...list.map(item => item.id)) : 0;
 
-      const createTimestamp = now;
-      const updateTimestamp = createTimestamp;
+      const createTimestamp = now; // For a new tracking entry, createTime is now
+      const updateTimestamp = createTimestamp; // Initially updateTime is same as createTime
 
       const newItem = {
         id: maxId + 1,
-        orderNumber: data.orderNumber || `TRK@integer(5000000, 5999999)`,
-        previousLocation: data.previousLocation,
+        orderNumber: data.orderNumber || `TRK${Random.date('yyMMdd')}${Random.string('number', 5)}`,
+        previousLocation: data.previousLocation || '仓库始发',
         currentLocation: data.currentLocation,
-        currentLocationContactPerson: data.currentLocationContactPerson,
-        currentLocationContactPhone: data.currentLocationContactPhone,
-        remarks: data.remarks,
+        currentLocationContactPerson: data.currentLocationContactPerson || Random.cname(),
+        currentLocationContactPhone: data.currentLocationContactPhone || `1${Random.string('number',10)}`,
+        remarks: data.remarks || `包裹已揽收，发往 ${data.currentLocation || Random.city()}`,
         createTime: formatTimestamp(createTimestamp),
         updateTime: formatTimestamp(updateTimestamp),
-        operator: data.operator || 'system_mock_create'
+        operator: data.operator || Random.pick(commonOperators)
       };
       list.unshift(newItem);
       return { code: 20000, data: { item: newItem }, message: '创建成功' };
@@ -129,8 +158,8 @@ module.exports = [
       if (itemIndex !== -1) {
         const originalCreateTime = list[itemIndex].createTime;
         list[itemIndex] = { ...list[itemIndex], ...data };
-        list[itemIndex].createTime = originalCreateTime;
-        list[itemIndex].updateTime = formatTimestamp(Date.now());
+        list[itemIndex].createTime = originalCreateTime; // Preserve original createTime
+        list[itemIndex].updateTime = formatTimestamp(Date.now()); // Update time to now
         return { code: 20000, data: 'success', message: '更新成功' };
       }
       return { code: 50000, message: '记录未找到' };

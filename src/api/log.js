@@ -1,25 +1,20 @@
 import request from '@/utils/request'
 
-/**
- * 获取日志列表
- * @param {object} query 查询参数
- */
+// 获取日志列表
 export function fetchLogList(query) {
   return request({
-    url: '/api/log/list', // 确保此URL与mock或后端API一致
+    url: '/log/list',
     method: 'get',
     params: query
   })
 }
 
-/**
- * 删除指定ID的日志
- * @param {number} id 日志ID
- */
-export function deleteLog(id) { // 确保这里是 export function deleteLog
-  return request({
-    url: '/api/log/delete', // 确保此URL与mock或后端API一致
-    method: 'post', // 方法与mock或后端API一致 (POST 或 DELETE)
-    data: { id } // 将ID作为请求体发送
-  })
-}
+// (通常日志是系统自动记录，较少手动创建或删除)
+// 如有需要，可添加删除日志接口
+// export function deleteLog(id) {
+//   return request({
+//     url: '/log/delete',
+//     method: 'post',
+//     data: { id }
+//   })
+// }

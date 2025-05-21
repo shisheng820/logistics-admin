@@ -1,5 +1,5 @@
 module.exports = {
-  title: '游艇旅游台账后台管理系统', // 确保这是正确的标题
+  title: '智能物流管理系统', // 确保这是正确的标题
   showSettings: true,
   tagsView: true,
   fixedHeader: false,
@@ -7,7 +7,7 @@ module.exports = {
   errorLog: 'production'
 }
 // module.exports = {
-//   title: '游艇旅游台账后台管理系统', // Updated Title
+//   title: '智能物流管理系统', // Updated Title
 
 //   /**
 //    * @type {boolean} true | false

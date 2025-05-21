@@ -3,168 +3,214 @@ import Router from 'vue-router'
 
 Vue.use(Router)
 
-/* 布局组件 */
+/* Layout */
 import Layout from '@/layout'
 
+/**
+ * Note: sub-menu only appear when route children.length >= 1
+ * Detail see: https://panjiachen.github.io/vue-element-admin-site/guide/essentials/router-and-nav.html
+ *
+ * hidden: true                   if set true, item will not show in the sidebar(default is false)
+ * alwaysShow: true               if set true, will always show the root menu
+ * if not set alwaysShow, when item has more than one children route,
+ * it will becomes nested mode, otherwise not show the root menu
+ * redirect: noRedirect           if set noRedirect will no redirect in the breadcrumb
+ * name:'router-name'             the name is used by <keep-alive> (must set!!!)
+ * meta : {
+    roles: ['admin','editor']    control page roles (you can set multiple roles)
+    title: 'title'               the name show in sidebar and breadcrumb (recommend set)
+    icon: 'svg-name'/'el-icon-x' the icon show in the sidebar
+    breadcrumb: false            if set false, the item will hidden in breadcrumb(default is true)
+    activeMenu: '/example/list'  if set path, the sidebar will highlight the path you set
+  }
+ */
+
+/**
+ * constantRoutes
+ * a base page that does not have permission requirements
+ * all roles can be accessed
+ */
 export const constantRoutes = [
-  {
-    path: '/redirect',
-    component: Layout,
-    hidden: true,
-    children: [
-      {
-        path: '/redirect/:path(.*)',
-        component: () => import('@/views/redirect/index')
-      }
-    ]
-  },
   {
     path: '/login',
     component: () => import('@/views/login/index'),
     hidden: true
   },
-  {
-    path: '/register',
-    component: () => import('@/views/register/index'),
-    hidden: true
-  },
-  {
-    path: '/auth-redirect',
-    component: () => import('@/views/login/auth-redirect'),
-    hidden: true
-  },
+
   {
     path: '/404',
     component: () => import('@/views/error-page/404'),
     hidden: true
   },
-  {
-    path: '/401',
-    component: () => import('@/views/error-page/401'),
-    hidden: true
-  },
+
   {
     path: '/',
     component: Layout,
     redirect: '/dashboard',
-    children: [
-      {
-        path: 'dashboard',
-        component: () => import('@/views/dashboard/index'),
-        name: 'Dashboard',
-        meta: { title: '首页', icon: 'dashboard', affix: true }
-      }
-    ]
+    children: [{
+      path: 'dashboard',
+      name: 'Dashboard',
+      component: () => import('@/views/dashboard/index'),
+      meta: { title: '首页看板', icon: 'dashboard' } // Changed title
+    }]
   },
-  // {
-  //   path: '/user-manage',
-  //   component: Layout,
-  //   children: [{
-  //     path: 'index',
-  //     component: () => import('@/views/user-manager/index'),
-  //     name: 'UserAccountManagement',
-  //     meta: {
-  //       title: '后台用户管理',
-  //       icon: 'user' // SVG icon
-  //     }
-  //   }]
-  // },
+
   {
-    path: '/customer',
+    path: '/profile',
     component: Layout,
-    redirect: '/customer/index',
-    name: 'CustomerManagement',
-    meta: {
-      title: '客户管理',
-      icon: 'peoples' // SVG icon
-    },
+    redirect: '/profile/index',
+    hidden: true,
     children: [
       {
         path: 'index',
-        component: () => import('@/views/customer/index'),
-        name: 'CustomerList',
-        meta: { title: '客户管理' } // 子菜单通常不单独显示图标在侧边栏
-      }
-    ]
-  },
-  {
-    path: '/ledger',
-    component: Layout,
-    redirect: '/ledger/list',
-    name: 'LedgerManagement',
-    meta: {
-      title: '台账管理',
-      icon: 'form' // SVG icon
-    },
-    children: [
-      {
-        path: 'list',
-        component: () => import('@/views/ledger/index'),
-        name: 'LedgerList',
-        meta: { title: '台账管理' }
+        name: 'Profile',
+        component: () => import('@/views/profile/index'),
+        meta: { title: '个人中心', icon: 'user' }
       }
     ]
   }
-  // ... (其他可能存在的 constantRoutes)
 ]
 
+/**
+ * asyncRoutes
+ * the routes that need to be dynamically loaded based on user roles
+ */
 export const asyncRoutes = [
   {
-    path: '/line', // 此路由现在用于 “客户月度占比”
+    path: '/inbound',
     component: Layout,
-    children: [{
-      path: '',
-      component: () => import('@/views/charts/line'),
-      name: 'CustomerMonthlyPercentage',
-      meta: {
-        icon: 'peoples', // SVG icon
-        title: '客户月度占比',
-        noCache: true
-      }
-    }]
-  },
-  {
-    path: '/baifen', // 此路由现在用于 “境内台账月度金额占比”
-    component: Layout,
-    children: [{
-      path: '',
-      component: () => import('@/views/charts/baifen'),
-      name: 'LedgerMonthlyAmountPercentage',
-      meta: {
-        icon: 'money', // SVG icon
-        title: '境内台账月度金额占比',
-        noCache: true
-      }
-    }]
-  },
-  // 日志管理 - 图标已更新
-  {
-    path: '/log',
-    component: Layout,
+    redirect: '/inbound/list',
+    name: 'InboundManagement',
+    meta: { title: '入库管理', icon: 'el-icon-sold-out' }, // Using Element UI icon
     children: [
       {
         path: 'list',
-        component: () => import('@/views/log/index'),
-        name: 'LogManagement',
-        meta: { title: '日志管理', icon: 'clipboard' } // <--- 修改图标为 'clipboard' (SVG图标)
+        name: 'InboundList',
+        component: () => import('@/views/inbound/index'),
+        meta: { title: '入库列表', icon: 'list' }
       }
     ]
   },
-  // 404页面必须放在最后
+
+  {
+    path: '/outbound',
+    component: Layout,
+    redirect: '/outbound/list',
+    name: 'OutboundManagement',
+    meta: { title: '出库管理', icon: 'el-icon-sell' }, // Using Element UI icon
+    children: [
+      {
+        path: 'list',
+        name: 'OutboundList',
+        component: () => import('@/views/outbound/index'),
+        meta: { title: '出库列表', icon: 'list' }
+      }
+    ]
+  },
+
+  {
+    path: '/dispatch',
+    component: Layout,
+    redirect: '/dispatch/list',
+    name: 'DispatchManagement',
+    meta: { title: '智能调度', icon: 'el-icon-s-promotion' }, // Using Element UI icon
+    children: [
+      {
+        path: 'list',
+        name: 'DispatchList',
+        component: () => import('@/views/dispatch/index'),
+        meta: { title: '调度列表', icon: 'list' }
+      }
+    ]
+  },
+
+  {
+    path: '/supplychain',
+    component: Layout,
+    redirect: '/supplychain/list',
+    name: 'SupplyChainManagement',
+    meta: { title: '供应链管理', icon: 'el-icon-truck' }, // Using Element UI icon
+    children: [
+      {
+        path: 'list',
+        name: 'SupplyChainList',
+        component: () => import('@/views/supplychain/index'),
+        meta: { title: '供应商列表', icon: 'list' }
+      }
+    ]
+  },
+
+  {
+    path: '/tracking',
+    component: Layout,
+    redirect: '/tracking/list',
+    name: 'TrackingManagement',
+    meta: { title: '监控与追踪', icon: 'el-icon-map-location' }, // Using Element UI icon
+    children: [
+      {
+        path: 'list',
+        name: 'TrackingList',
+        component: () => import('@/views/tracking/index'),
+        meta: { title: '追踪列表', icon: 'list' }
+      }
+    ]
+  },
+  // Data Analysis is now part of Dashboard, if a separate page is needed, add here.
+  // {
+  //   path: '/data-analysis',
+  //   component: Layout,
+  //   children: [
+  //     {
+  //       path: 'index',
+  //       name: 'DataAnalysis',
+  //       component: () => import('@/views/data-analysis/index'),
+  //       meta: { title: '数据分析', icon: 'chart' }
+  //     }
+  //   ]
+  // },
+
+  {
+    path: '/system',
+    component: Layout,
+    redirect: '/system/user',
+    name: 'SystemManagement',
+    meta: { title: '系统管理', icon: 'el-icon-setting' },
+    children: [
+      {
+        path: 'user',
+        name: 'UserManagement',
+        component: () => import('@/views/system/user/index'),
+        meta: { title: '用户管理', icon: 'peoples' }
+      },
+      {
+        path: 'log',
+        name: 'LogManagement',
+        component: () => import('@/views/system/log/index'),
+        meta: { title: '日志管理', icon: 'el-icon-document' }
+      }
+      // Add role management if needed later
+      // {
+      //   path: 'role',
+      //   name: 'RoleManagement',
+      //   component: () => import('@/views/system/role/index'),
+      //   meta: { title: '角色管理', icon: 'el-icon-s-custom' }
+      // }
+    ]
+  },
+
+  // 404 page must be placed at the end !!!
   { path: '*', redirect: '/404', hidden: true }
 ]
 
 const createRouter = () => new Router({
-  mode: 'hash',
+  // mode: 'history', // require service support
   scrollBehavior: () => ({ y: 0 }),
-  // 将常量路由和异步路由合并，或者根据您的权限逻辑决定如何组合
-  // 如果所有路由都是固定的，可以直接 routes: [...constantRoutes, ...asyncRoutes]
-  // 但通常 asyncRoutes 是在用户登录后根据权限动态添加的
   routes: constantRoutes
 })
 
 const router = createRouter()
 
+// Detail see: https://github.com/vuejs/vue-router/issues/1234#issuecomment-357941465
 export function resetRouter() {
   const newRouter = createRouter()
   router.matcher = newRouter.matcher // reset router

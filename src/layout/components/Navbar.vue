@@ -21,7 +21,7 @@
         </div>
         <el-dropdown-menu slot="dropdown">
           <router-link to="/">
-            <el-dropdown-item>游艇旅游台账后台管理系统</el-dropdown-item>
+            <el-dropdown-item>智能物流管理系统</el-dropdown-item>
           </router-link>
           <el-dropdown-item @click.native="showChangePasswordDialog">修改密码</el-dropdown-item>
           <el-dropdown-item divided @click.native="logout">

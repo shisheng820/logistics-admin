@@ -2,41 +2,37 @@ const Mock = require('mockjs')
 const { param2Obj } = require('./utils')
 
 const user = require('./user')
-const role = require('./role')
-const article = require('./article')
-const search = require('./remote-search')
-// const domestic = require('./domestic') // Assuming this is old/renamed
-// const international = require('./international') // Assuming this is old/renamed
-// const amendments = require('./amendments') // Assuming this is old/renamed
-const userManager = require('./user-manager') // Keep if still relevant for admin users
-const customerDomestic = require('./customer-domestic') // Replaced by customer.js
-// const customerInternational = require('./customer-international') // Replaced by customer.js
+const role = require('./role') // Keep if system uses roles extensively, or remove if simplified
+const article = require('./article') // Example, can be removed
+const search = require('./remote-search') // Example, can be removed
 
-// New Mocks
-const customer = require('./customer')
-const ledger = require('./ledger')
+// New Mocks for Logistics System
+const inbound = require('./inbound')
+const outbound = require('./outbound')
+const dispatch = require('./dispatch')
+const supplyChain = require('./supplyChain')
+const tracking = require('./tracking')
 const dataAnalysis = require('./dataAnalysis')
 const log = require('./log')
+
 
 const mocks = [
   ...user,
   ...role,
-  ...article, // Keep if example pages are desired
-  ...search,  // Keep if remote search examples are desired
-  ...userManager,
-  // ...domestic, // Comment out or remove if replaced
-  // ...international,
-  // ...amendments,
-  ...customerDomestic,
-  // ...customerInternational,
-  ...customer,     // Add new customer mock
-  ...ledger,       // Add new ledger mock
-  ...dataAnalysis, // Add new dataAnalysis mock
-  ...log           // Add new log mock
+  ...article,
+  ...search,
+  ...inbound,
+  ...outbound,
+  ...dispatch,
+  ...supplyChain,
+  ...tracking,
+  ...dataAnalysis,
+  ...log
 ]
 
-// ... (rest of the file remains the same) ...
-
+// for front mock
+// please use it cautiously, it will redefine XMLHttpRequest,
+// which will cause many of your third-party libraries to be invalidated (like progress event).
 function mockXHR() {
   // mock patch
   // https://github.com/nuysoft/Mock/issues/300
@@ -60,7 +56,7 @@ function mockXHR() {
         // https://expressjs.com/en/4x/api.html#req
         result = respond({
           method: type,
-          body: JSON.parse(body || '{}'), // Ensure body is parsed, handle empty body
+          body: JSON.parse(body),
           query: param2Obj(url)
         })
       } else {

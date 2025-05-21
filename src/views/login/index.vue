@@ -6,7 +6,7 @@
 
       <!-- 系统标题 -->
       <div class="title-container">
-        <h3 class="title">游艇旅游台账后台管理系统</h3>
+        <h3 class="title">智能物流管理系统</h3>
       </div>
 
       <!-- 用户名输入 -->
@@ -74,7 +74,7 @@
     </el-form>
 
     <div class="version-info">
-      游艇旅游台账后台管理系统v1.0
+      智能物流管理系统v1.0
     </div>
 
     <!-- 第三方登录对话框 -->

@@ -1,21 +1,20 @@
+// src/api/dataAnalysis.js
 import request from '@/utils/request'
 
-/**
- * 获取近2年每月客户人数统计数据
- */
-export function getCustomerMonthlyCountStats() {
+// 获取入库订单统计数据
+export function getInboundStats(params) {
   return request({
-    url: '/api/analysis/customerMonthlyCount', // 与 mock URL 一致
-    method: 'get'
+    url: '/logistics/data-analysis/inbound-stats',
+    method: 'get',
+    params // Example: { years: 2 }
   })
 }
 
-/**
- * 获取近2年境内每月台账金额统计数据
- */
-export function getDomesticLedgerMonthlyAmountStats() {
+// 获取出库订单统计数据
+export function getOutboundStats(params) {
   return request({
-    url: '/api/analysis/domesticLedgerMonthlyAmount', // 与 mock URL 一致
-    method: 'get'
+    url: '/logistics/data-analysis/outbound-stats',
+    method: 'get',
+    params // Example: { years: 2, region: 'domestic' }
   })
 }

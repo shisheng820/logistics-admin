@@ -1,7 +1,7 @@
 const Mock = require('mockjs')
 const { Random } = Mock
 
-// --- 时间生成辅助函数（保持不变）---
+// --- Time Generation Helpers ---
 const START_DATE_STR = '2024-01-01T00:00:00.000Z';
 const startDate = new Date(START_DATE_STR).getTime();
 const currentDate = Date.now();
@@ -24,74 +24,56 @@ function generateFutureTimestamp(baseTime, minDaysOffset, maxDaysOffset) {
 function formatTimestamp(timestamp) {
   return new Date(timestamp).toISOString().slice(0, 19).replace('T', ' ');
 }
-// --- 时间生成辅助函数结束 ---
+// --- End of Time Generation Helpers ---
 
 const list = []
-const count = 30
+const count = 50
 
-// 地址生成相关配置
-const streetNames = [
-  '科技路', '创业大道', '工业一路', '创新路', '光明大街', 
-  '华强北路', '南山大道', '宝安南路', '龙岗大道', '坪山西路'
-];
-const buildingTypes = [
-  '工业园', '科技园', '创新园', '产业园', '商务中心',
-  '研发基地', '制造基地', '物流园区', '创业大厦'
-];
-const buildingNumbers = ['A', 'B', 'C', 'D', '一', '二', '三', '四'];
+// More realistic data pools for dispatch
+const cargoTypes = ['电子零部件', '医疗器械', '温控化学品', '高价值文件', '定制设备', '精密仪器', '大宗货物'];
+const cargoQualifiers = ['批次A', '加急件', '需轻放', '需恒温处理', '保密等级高', '超重件'];
+const shelfAreas = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K']; // Expanded shelf areas
+const commonOperators = ['张三调度', '李四复核', '王五执行', '系统自动调度', 'AI路径规划'];
+const dispatchReasons = ['库存优化', '订单拣选', '合并存储', '临时调拨', '按需移动'];
 
-const supplierSuffixes = ['科技有限公司', '贸易有限公司', '实业发展公司', '集团', '物流服务部'];
-const contactTitles = ['经理', '主管', '采购代表', '业务员'];
-const commonOperators = ['采购专员A', '供应链分析师', '系统管理员', '张主管'];
-const remarkTemplates = [
-  '长期合作伙伴，信誉良好。', '主要供应 {category} 类物料。', '价格有竞争力，但交期偶有延迟。',
-  '小批量试合作供应商。', '月结 {days} 天。', '需提前 {leadTime} 天下单。', '质量稳定。'
-];
-const materialCategories = ['电子元件', '五金配件', '包装材料', '办公用品', '清洁用品'];
 
 for (let i = 0; i < count; i++) {
   const id = count - i;
   const reverseIndexForTime = count - 1 - i;
   const createTimestamp = generatePrimaryTimestamp(reverseIndexForTime, count);
-  const updateTimestamp = generateFutureTimestamp(createTimestamp, 1, 30);
+  const dispatchTimestamp = generateFutureTimestamp(createTimestamp, 0, 1); // Dispatch shortly after creation/decision
+  const updateTimestamp = generateFutureTimestamp(dispatchTimestamp, 0, 1); // Update shortly after dispatch action
 
-  const remark = Random.pick(remarkTemplates)
-                  .replace('{category}', Random.pick(materialCategories))
-                  .replace('{days}', Random.pick([30, 45, 60]))
-                  .replace('{leadTime}', Random.integer(3,15));
+  const originalShelf = `${Random.pick(shelfAreas)}-${Random.integer(1, 10)}-${Random.string('number', 2).padStart(2, '0')}`;
+  let newShelf = `${Random.pick(shelfAreas)}-${Random.integer(1, 10)}-${Random.string('number', 2).padStart(2, '0')}`;
+  while (newShelf === originalShelf) { // Ensure new shelf is different
+    newShelf = `${Random.pick(shelfAreas)}-${Random.integer(1, 10)}-${Random.string('number', 2).padStart(2, '0')}`;
+  }
+  const cargoDetail = `${Random.pick(cargoTypes)} (${Random.pick(cargoQualifiers)}) - ${Random.pick(dispatchReasons)}`;
 
   list.push(Mock.mock({
     id: id,
-    supplierName: Random.city() + Random.word(2,4) + Random.pick(supplierSuffixes),
-    address: {
-      province: Random.province(),
-      city: Random.city(),
-      county: Random.county(),
-      street: `${Random.pick(streetNames)}${Random.integer(1, 399)}号`,
-      detail: `${Random.pick(buildingTypes)}${Random.pick(buildingNumbers)}区${Random.integer(1, 20)}栋`
-    },
-    contactPerson: Random.cname() + ' (' + Random.pick(contactTitles) + ')',
-    contactPhone: /^1[3456789]\d{9}$/,
-    remarks: remark,
-    createTime: formatTimestamp(createTimestamp),
-    updateTime: formatTimestamp(updateTimestamp),
+    orderNumber: `DISP${Random.date('yyMMdd')}${Random.string('number', 4)}`,
+    cargoDetails: cargoDetail,
+    originalShelfNumber: originalShelf,
+    newShelfNumber: newShelf,
+    dispatchTime: formatTimestamp(dispatchTimestamp),
+    createTime: formatTimestamp(createTimestamp), // Time when the dispatch task was created
+    updateTime: formatTimestamp(updateTimestamp), // Last update to this dispatch record
     operator: Random.pick(commonOperators)
   }))
-  
-  // 将地址对象格式化为字符串
-  list[i].address = `${list[i].address.province}${list[i].address.city}${list[i].address.county}` +
-                    `${list[i].address.street} · ${list[i].address.detail}`
 }
 
 module.exports = [
   {
-    url: '/supplychain/list',
+    url: '/dispatch/list',
     type: 'get',
     response: config => {
-      const { supplierName, contactPerson, page = 1, limit = 20, sort } = config.query
+      const { orderNumber, originalShelfNumber, newShelfNumber, page = 1, limit = 20, sort } = config.query
       let mockList = list.filter(item => {
-        if (supplierName && !item.supplierName.includes(supplierName)) return false
-        if (contactPerson && !item.contactPerson.includes(contactPerson)) return false
+        if (orderNumber && !item.orderNumber.includes(orderNumber)) return false
+        if (originalShelfNumber && !item.originalShelfNumber.includes(originalShelfNumber)) return false
+        if (newShelfNumber && !item.newShelfNumber.includes(newShelfNumber)) return false
         return true
       })
 
@@ -101,7 +83,7 @@ module.exports = [
         mockList = [...mockList].sort((a, b) => {
           let valA = a[prop];
           let valB = b[prop];
-          const timeFields = ['createTime', 'updateTime'];
+          const timeFields = ['dispatchTime', 'createTime', 'updateTime'];
           if (timeFields.includes(prop)) {
             valA = new Date(valA).getTime();
             valB = new Date(valB).getTime();
@@ -123,32 +105,24 @@ module.exports = [
     }
   },
   {
-    url: '/supplychain/create',
+    url: '/dispatch/create',
     type: 'post',
     response: config => {
       const data = config.body;
       const now = Date.now();
       const maxId = list.length > 0 ? Math.max(...list.map(item => item.id)) : 0;
-      const createTimestamp = now;
-      const updateTimestamp = createTimestamp;
 
-      // 生成新地址
-      const newAddress = Mock.mock({
-        province: Random.province(),
-        city: Random.city(),
-        county: Random.county(),
-        street: `${Random.pick(streetNames)}${Random.integer(1, 399)}号`,
-        detail: `${Random.pick(buildingTypes)}${Random.pick(buildingNumbers)}区${Random.integer(1, 20)}栋`
-      })
+      const createTimestamp = now;
+      const dispatchTimestamp = data.dispatchTime ? new Date(data.dispatchTime).getTime() : generateFutureTimestamp(createTimestamp, 0, 0);
+      const updateTimestamp = dispatchTimestamp;
 
       const newItem = {
         id: maxId + 1,
-        supplierName: data.supplierName || Random.city() + Random.word(2,4) + Random.pick(supplierSuffixes),
-        address: `${newAddress.province}${newAddress.city}${newAddress.county}` +
-                 `${newAddress.street} · ${newAddress.detail}`,
-        contactPerson: data.contactPerson || Random.cname() + ' (' + Random.pick(contactTitles) + ')',
-        contactPhone: data.contactPhone || `1${Random.string('number',10)}`,
-        remarks: data.remarks || Random.pick(remarkTemplates).replace('{category}', Random.pick(materialCategories)),
+        orderNumber: data.orderNumber || `DISP${Random.date('yyMMdd')}${Random.string('number', 4)}`,
+        cargoDetails: data.cargoDetails || `${Random.pick(cargoTypes)} (${Random.pick(cargoQualifiers)}) - ${Random.pick(dispatchReasons)}`,
+        originalShelfNumber: data.originalShelfNumber,
+        newShelfNumber: data.newShelfNumber,
+        dispatchTime: formatTimestamp(dispatchTimestamp),
         createTime: formatTimestamp(createTimestamp),
         updateTime: formatTimestamp(updateTimestamp),
         operator: data.operator || Random.pick(commonOperators)
@@ -158,15 +132,19 @@ module.exports = [
     }
   },
   {
-    url: '/supplychain/update',
+    url: '/dispatch/update',
     type: 'post',
     response: config => {
       const data = config.body;
       const itemIndex = list.findIndex(r => r.id === data.id);
       if (itemIndex !== -1) {
         const originalCreateTime = list[itemIndex].createTime;
+        // const originalDispatchTime = list[itemIndex].dispatchTime; // Keep if dispatchTime itself isn't updatable
+
         list[itemIndex] = { ...list[itemIndex], ...data };
         list[itemIndex].createTime = originalCreateTime;
+        // If dispatchTime is part of the update payload, use it, else keep original
+        list[itemIndex].dispatchTime = data.dispatchTime ? formatTimestamp(new Date(data.dispatchTime).getTime()) : list[itemIndex].dispatchTime;
         list[itemIndex].updateTime = formatTimestamp(Date.now());
         return { code: 20000, data: 'success', message: '更新成功' };
       }
@@ -174,7 +152,7 @@ module.exports = [
     }
   },
   {
-    url: '/supplychain/delete',
+    url: '/dispatch/delete',
     type: 'post',
     response: config => {
       const { id } = config.body;

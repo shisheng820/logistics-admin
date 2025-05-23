@@ -38,7 +38,7 @@ import { mapGetters } from 'vuex'
 import Breadcrumb from '@/components/Breadcrumb'
 import Hamburger from '@/components/Hamburger'
 import ErrorLog from '@/components/ErrorLog'
-import Search from '@/components/HeaderSearch'
+// import Search from '@/components/HeaderSearch'
 // 移除了 Screenfull 和 SizeSelect 的导入
 // import Screenfull from '@/components/Screenfull'
 // import SizeSelect from '@/components/SizeSelect'
@@ -47,8 +47,8 @@ export default {
   components: {
     Breadcrumb,
     Hamburger,
-    ErrorLog,
-    Search
+    ErrorLog
+    // Search
     // 移除了 Screenfull 和 SizeSelect 的注册
     // Screenfull,
     // SizeSelect

@@ -8,7 +8,7 @@
         搜索
       </el-button> -->
       <el-button class="filter-item" style="margin-left: 10px;" type="primary" icon="el-icon-edit" @click="handleCreate">
-        新增入库
+        新增
       </el-button>
     </div>
 
@@ -27,7 +27,7 @@
           <span>{{ row.id }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="订单编号" prop="orderNumber" width="130px" align="center">
+      <el-table-column label="订单编号" prop="orderNumber" width="120px" align="center">
         <template slot-scope="{row}">
           <span>{{ row.orderNumber }}</span>
         </template>
@@ -52,7 +52,7 @@
           <span>{{ row.cargoDetails }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="货架编号" prop="shelfNumber" width="80px" align="center">
+      <el-table-column label="货架编号" prop="shelfNumber" width="65px" align="center">
         <template slot-scope="{row}">
           <span>{{ row.shelfNumber }}</span>
         </template>

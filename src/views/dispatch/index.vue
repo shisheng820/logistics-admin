@@ -1,6 +1,12 @@
 <template>
   <div class="app-container">
     <div class="filter-container">
+      <!-- <el-input v-model="listQuery.orderNumber" placeholder="调度单号" style="width: 180px;" class="filter-item" @keyup.enter.native="handleFilter" />
+      <el-input v-model="listQuery.originalShelfNumber" placeholder="原货架号" style="width: 130px;" class="filter-item" @keyup.enter.native="handleFilter" />
+      <el-input v-model="listQuery.newShelfNumber" placeholder="新货架号" style="width: 130px;" class="filter-item" @keyup.enter.native="handleFilter" />
+      <el-button v-waves class="filter-item" type="primary" icon="el-icon-search" @click="handleFilter" style="margin-left: 10px;">
+        搜索
+      </el-button> -->
       <el-button class="filter-item" style="margin-left: 10px;" type="primary" icon="el-icon-edit" @click="handleCreate">
         新增
       </el-button>
@@ -16,47 +22,47 @@
       style="width: 100%;"
       @sort-change="sortChange"
     >
-      <el-table-column label="ID" prop="id" sortable="custom" align="center" width="60" :class-name="getSortClass('id')">
+      <el-table-column label="ID" prop="id" sortable="custom" align="center" width="70" :class-name="getSortClass('id')">
         <template slot-scope="{row}">
           <span>{{ row.id }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="订单编号" prop="orderNumber" width="130px" align="center">
+      <el-table-column label="调度单号" width="160px" align="center">
         <template slot-scope="{row}">
           <span>{{ row.orderNumber }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="货物详情备注" prop="cargoDetails" min-width="180px" :show-overflow-tooltip="true">
+      <el-table-column label="货物详情/备注" min-width="180px">
         <template slot-scope="{row}">
           <span>{{ row.cargoDetails }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="原货架编号" prop="originalShelfNumber" width="110px" align="center">
+      <el-table-column label="原货架号" width="110px" align="center">
         <template slot-scope="{row}">
           <span>{{ row.originalShelfNumber }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="调度后货架号" prop="newShelfNumber" width="120px" align="center">
+      <el-table-column label="新货架号" width="110px" align="center">
         <template slot-scope="{row}">
           <span>{{ row.newShelfNumber }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="调度日期" prop="dispatchTime" sortable="custom" width="110px" align="center" :class-name="getSortClass('dispatchTime')">
+      <el-table-column label="调度时间" width="110px" align="center" prop="dispatchTime" sortable="custom" :class-name="getSortClass('dispatchTime')">
         <template slot-scope="{row}">
           <span>{{ row.dispatchTime | parseTime('{y}-{m}-{d}') }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="新增日期" prop="createTime" sortable="custom" width="110px" align="center" :class-name="getSortClass('createTime')">
+      <el-table-column label="新增时间" width="110px" align="center" prop="createTime" sortable="custom" :class-name="getSortClass('createTime')">
         <template slot-scope="{row}">
           <span>{{ row.createTime | parseTime('{y}-{m}-{d}') }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="修改日期" prop="updateTime" sortable="custom" width="110px" align="center" :class-name="getSortClass('updateTime')">
+      <el-table-column label="修改时间" width="110px" align="center" prop="updateTime" sortable="custom" :class-name="getSortClass('updateTime')">
         <template slot-scope="{row}">
           <span>{{ row.updateTime | parseTime('{y}-{m}-{d}') }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="操作员" prop="operator" width="90px" align="center">
+      <el-table-column label="操作员" width="100px" align="center">
         <template slot-scope="{row}">
           <span>{{ row.operator }}</span>
         </template>
@@ -66,7 +72,7 @@
           <el-button type="primary" size="mini" @click="handleUpdate(row)">
             编辑
           </el-button>
-          <el-button size="mini" type="danger" @click="handleDelete(row,$index)">
+          <el-button v-if="row.status!='deleted'" size="mini" type="danger" @click="handleDelete(row,$index)">
             删除
           </el-button>
         </template>
@@ -75,22 +81,22 @@
 
     <pagination v-show="total>0" :total="total" :page.sync="listQuery.page" :limit.sync="listQuery.limit" @pagination="getList" />
 
-    <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible">
-      <el-form ref="dataForm" :rules="rules" :model="temp" label-position="left" label-width="120px" style="width: 450px; margin-left:50px;">
-        <el-form-item label="订单编号" prop="orderNumber">
+    <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible" width="600px">
+      <el-form ref="dataForm" :rules="rules" :model="temp" label-position="left" label-width="100px" style="width: 90%; margin-left:20px;">
+        <el-form-item label="调度单号" prop="orderNumber">
           <el-input v-model="temp.orderNumber" />
         </el-form-item>
-        <el-form-item label="货物详情备注" prop="cargoDetails">
-          <el-input v-model="temp.cargoDetails" type="textarea" :rows="2" />
-        </el-form-item>
-        <el-form-item label="原货架编号" prop="originalShelfNumber">
+        <el-form-item label="原货架号" prop="originalShelfNumber">
           <el-input v-model="temp.originalShelfNumber" />
         </el-form-item>
-        <el-form-item label="调度后货架号" prop="newShelfNumber">
+        <el-form-item label="新货架号" prop="newShelfNumber">
           <el-input v-model="temp.newShelfNumber" />
         </el-form-item>
-        <el-form-item label="调度日期" prop="dispatchTime">
-          <el-date-picker v-model="temp.dispatchTime" type="date" placeholder="选择日期" value-format="yyyy-MM-dd" style="width:100%" />
+        <el-form-item label="货物详情" prop="cargoDetails">
+          <el-input v-model="temp.cargoDetails" type="textarea" :rows="3" placeholder="请输入货物详情及备注" />
+        </el-form-item>
+        <el-form-item label="调度时间" prop="dispatchTime">
+          <el-date-picker v-model="temp.dispatchTime" type="date" placeholder="选择日期" value-format="yyyy-MM-dd" style="width:100%;" />
         </el-form-item>
         <el-form-item label="操作员" prop="operator">
           <el-input v-model="temp.operator" />
@@ -110,14 +116,18 @@
 
 <script>
 import { fetchDispatchList, createDispatch, updateDispatch, deleteDispatch } from '@/api/dispatch'
-import waves from '@/directive/waves'
-import { parseTime } from '@/utils'
-import Pagination from '@/components/Pagination'
+import waves from '@/directive/waves' // 水波纹指令
+import { parseTime } from '@/utils' // 时间格式化工具
+import Pagination from '@/components/Pagination' // 分页组件
 
 export default {
   name: 'DispatchTable',
   components: { Pagination },
   directives: { waves },
+  filters: {
+    // 注册过滤器，确保模板中的 `| parseTime` 能正确工作
+    parseTime
+  },
   data() {
     return {
       tableKey: 0,
@@ -130,7 +140,7 @@ export default {
         orderNumber: undefined,
         originalShelfNumber: undefined,
         newShelfNumber: undefined,
-        sort: '-id'
+        sort: '+id'
       },
       temp: {
         id: undefined,
@@ -138,22 +148,21 @@ export default {
         cargoDetails: '',
         originalShelfNumber: '',
         newShelfNumber: '',
-        dispatchTime: parseTime(new Date(), '{y}-{m}-{d}'),
+        dispatchTime: new Date(),
         operator: ''
       },
       dialogFormVisible: false,
       dialogStatus: '',
       textMap: {
-        update: '编辑调度单',
-        create: '新增调度单'
+        update: '编辑调度记录',
+        create: '新增调度记录'
       },
       rules: {
-        orderNumber: [{ required: true, message: '订单编号为必填项', trigger: 'blur' }],
-        // cargoDetails might be optional for dispatch if only shelves are changed
-        originalShelfNumber: [{ required: true, message: '原货架编号为必填项', trigger: 'blur' }],
-        newShelfNumber: [{ required: true, message: '调度后货架号为必填项', trigger: 'blur' }],
-        dispatchTime: [{ type: 'string', required: true, message: '调度日期为必填项', trigger: 'change' }],
-        operator: [{ required: true, message: '操作员为必填项', trigger: 'blur' }]
+        orderNumber: [{ required: true, message: '调度单号不能为空', trigger: 'blur' }],
+        originalShelfNumber: [{ required: true, message: '原货架号不能为空', trigger: 'blur' }],
+        newShelfNumber: [{ required: true, message: '新货架号不能为空', trigger: 'blur' }],
+        dispatchTime: [{ type: 'date', required: true, message: '调度时间不能为空', trigger: 'change' }], // 保持 date 类型，因为 el-date-picker type="date"
+        operator: [{ required: true, message: '操作员不能为空', trigger: 'blur' }]
       },
       downloadLoading: false
     }
@@ -168,12 +177,46 @@ export default {
         this.list = response.data.items
         this.total = response.data.total
         this.listLoading = false
+      }).catch(err => {
+        console.error('获取调度列表失败:', err)
+        this.$message({
+          message: '获取调度列表失败: ' + (err.message || '未知错误'),
+          type: 'error',
+          duration: 5 * 1000
+        })
+        this.listLoading = false
       })
     },
     handleFilter() {
       this.listQuery.page = 1
       this.getList()
     },
+    sortChange(data) {
+      const { prop, order } = data
+      if (order) {
+        this.listQuery.sort = (order === 'ascending' ? '+' : '-') + prop
+      } else {
+        this.listQuery.sort = '+id' // 默认排序
+      }
+      this.handleFilter()
+    },
+    // sortByID 和 sortByTime 可以合并到 sortChange 中，如果不需要特别处理
+    // sortByID(order) {
+    //   if (order === 'ascending') {
+    //     this.listQuery.sort = '+id'
+    //   } else {
+    //     this.listQuery.sort = '-id'
+    //   }
+    //   this.handleFilter()
+    // },
+    // sortByTime(order, prop) {
+    //   if (order === 'ascending') {
+    //     this.listQuery.sort = `+${prop}`
+    //   } else {
+    //     this.listQuery.sort = `-${prop}`
+    //   }
+    //   this.handleFilter()
+    // },
     resetTemp() {
       this.temp = {
         id: undefined,
@@ -181,12 +224,13 @@ export default {
         cargoDetails: '',
         originalShelfNumber: '',
         newShelfNumber: '',
-        dispatchTime: parseTime(new Date(), '{y}-{m}-{d}'),
-        operator: this.$store.getters.name || ''
+        dispatchTime: null, // 对于日期选择器，设为null或具体日期字符串更好
+        operator: ''
       }
     },
     handleCreate() {
       this.resetTemp()
+      this.temp.dispatchTime = parseTime(new Date(), '{y}-{m}-{d}') // 初始化为当前日期的字符串格式
       this.dialogStatus = 'create'
       this.dialogFormVisible = true
       this.$nextTick(() => {
@@ -196,11 +240,10 @@ export default {
     createData() {
       this.$refs['dataForm'].validate((valid) => {
         if (valid) {
-          const dataToSend = { ...this.temp }
-          if (dataToSend.dispatchTime && dataToSend.dispatchTime.length === 10) {
-            dataToSend.dispatchTime = dataToSend.dispatchTime + ' 00:00:00'
-          }
-          createDispatch(dataToSend).then(() => {
+          const tempData = { ...this.temp }
+          delete tempData.id
+          // dispatchTime 由 value-format="yyyy-MM-dd" 处理，已经是字符串
+          createDispatch(tempData).then(() => {
             this.dialogFormVisible = false
             this.$notify({
               title: '成功',
@@ -209,12 +252,21 @@ export default {
               duration: 2000
             })
             this.getList()
+          }).catch(err => {
+            console.error('创建调度记录失败:', err)
+            this.$notify({
+              title: '失败',
+              message: '创建失败: ' + (err.message || '请重试'),
+              type: 'error',
+              duration: 3000
+            })
           })
         }
       })
     },
     handleUpdate(row) {
       this.temp = Object.assign({}, row)
+      // 确保 temp.dispatchTime 是 'yyyy-MM-dd' 格式的字符串，以便 el-date-picker 正确显示
       if (this.temp.dispatchTime) {
         this.temp.dispatchTime = parseTime(this.temp.dispatchTime, '{y}-{m}-{d}')
       }
@@ -228,11 +280,8 @@ export default {
       this.$refs['dataForm'].validate((valid) => {
         if (valid) {
           const tempData = { ...this.temp }
-          if (tempData.dispatchTime && tempData.dispatchTime.length === 10) {
-            tempData.dispatchTime = tempData.dispatchTime + ' 00:00:00'
-          }
+          // dispatchTime 由 value-format="yyyy-MM-dd" 处理，已经是字符串
           updateDispatch(tempData).then(() => {
-            this.getList()
             this.dialogFormVisible = false
             this.$notify({
               title: '成功',
@@ -240,24 +289,41 @@ export default {
               type: 'success',
               duration: 2000
             })
+            this.getList()
+          }).catch(err => {
+            console.error('更新调度记录失败:', err)
+            this.$notify({
+              title: '失败',
+              message: '更新失败: ' + (err.message || '请重试'),
+              type: 'error',
+              duration: 3000
+            })
           })
         }
       })
     },
     handleDelete(row, index) {
-      this.$confirm('确认删除该条调度记录吗?', '警告', {
-        confirmButtonText: '确认删除',
+      this.$confirm('确定删除这条调度记录吗?', '警告', {
+        confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning'
-      }).then(async() => {
-        await deleteDispatch(row.id)
-        this.list.splice(index, 1)
-        this.total--
-        this.$notify({
-          title: '成功',
-          message: '删除成功',
-          type: 'success',
-          duration: 2000
+      }).then(() => {
+        deleteDispatch(row.id).then(() => {
+          this.$notify({
+            title: '成功',
+            message: '删除成功',
+            type: 'success',
+            duration: 2000
+          })
+          this.getList()
+        }).catch(err => {
+          console.error('删除调度记录失败:', err)
+          this.$notify({
+            title: '失败',
+            message: '删除失败: ' + (err.message || '请重试'),
+            type: 'error',
+            duration: 3000
+          })
         })
       }).catch(() => {
         this.$message({
@@ -266,43 +332,20 @@ export default {
         })
       })
     },
-    handleDownload() {
-      this.downloadLoading = true
-      import('@/vendor/Export2Excel').then(excel => {
-        const tHeader = ['ID', '订单编号', '货物详情备注', '原货架编号', '调度后货架号', '调度日期', '新增日期', '修改日期', '操作员']
-        const filterVal = ['id', 'orderNumber', 'cargoDetails', 'originalShelfNumber', 'newShelfNumber', 'dispatchTime', 'createTime', 'updateTime', 'operator']
-        const data = this.formatJsonForExport(filterVal)
-        excel.export_json_to_excel({
-          header: tHeader,
-          data,
-          filename: '调度列表-' + parseTime(new Date(), '{y}{m}{d}{h}{i}{s}')
-        })
-        this.downloadLoading = false
-      })
-    },
-    formatJsonForExport(filterVal) {
-      const listToFormat = this.list || []
-      return listToFormat.map(v => filterVal.map(j => {
-        if (['dispatchTime', 'createTime', 'updateTime'].includes(j)) {
-          return parseTime(v[j], '{y}-{m}-{d}')
-        } else {
-          return v[j]
-        }
-      }))
-    },
-    sortChange(data) {
-      const { prop, order } = data
-      if (prop === 'id') {
-        this.listQuery.sort = (order === 'ascending' ? '+' : '-') + prop
-      } else if (['dispatchTime', 'createTime', 'updateTime'].includes(prop)) {
-        this.listQuery.sort = (order === 'ascending' ? '+' : '-') + prop
-      }
-      this.handleFilter()
-    },
     getSortClass: function(key) {
       const sort = this.listQuery.sort
-      return sort === `+${key}` ? 'ascending' : sort === `-${key}` ? 'descending' : ''
+      return (sort === `+${key}` ? 'ascending' : (sort === `-${key}` ? 'descending' : ''))
     }
   }
 }
 </script>
+
+<style scoped>
+.filter-container {
+  padding-bottom: 10px;
+}
+.filter-item {
+  margin-right: 10px;
+  margin-bottom: 10px;
+}
+</style>

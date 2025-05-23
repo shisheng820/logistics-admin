@@ -45,31 +45,31 @@ export default {
       // 更新 navItems 以匹配您最新的 router.js 配置
       navItems: [
         {
-          title: '入库管理', // from asyncRoutes
+          title: '入库列表', // from asyncRoutes
           icon: 'el-icon-box', // from asyncRoutes meta.icon
           path: '/inbound/list', // from asyncRoutes path + children path
           color: '#40c9c6' // Example color
         },
         {
-          title: '出库管理',
+          title: '出库列表',
           icon: 'el-icon-truck',
           path: '/outbound/list',
           color: '#36a3f7'
         },
         {
-          title: '智能调度',
+          title: '调度列表',
           icon: 'el-icon-cpu',
           path: '/dispatch/list',
           color: '#f4516c'
         },
         {
-          title: '供应链管理',
+          title: '供应商列表',
           icon: 'el-icon-connection',
           path: '/supplychain/list',
           color: '#f6ab4d'
         },
         {
-          title: '监控与追踪',
+          title: '追踪列表',
           icon: 'el-icon-monitor',
           path: '/tracking/list',
           color: '#34bfa3'

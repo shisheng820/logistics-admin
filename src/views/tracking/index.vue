@@ -51,12 +51,12 @@
           <span>{{ row.remarks }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="新增日期" prop="createTime" sortable="custom" width="100px" align="center" :class-name="getSortClass('createTime')">
+      <el-table-column label="新增日期" prop="createTime" sortable="custom" width="110px" align="center" :class-name="getSortClass('createTime')">
         <template slot-scope="{row}">
           <span>{{ row.createTime | parseTime('{y}-{m}-{d}') }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="修改日期" prop="updateTime" sortable="custom" width="100px" align="center" :class-name="getSortClass('updateTime')">
+      <el-table-column label="修改日期" prop="updateTime" sortable="custom" width="110px" align="center" :class-name="getSortClass('updateTime')">
         <template slot-scope="{row}">
           <span>{{ row.updateTime | parseTime('{y}-{m}-{d}') }}</span>
         </template>

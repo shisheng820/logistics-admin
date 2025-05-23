@@ -1,7 +1,7 @@
 <template>
   <div class="app-container">
     <div class="filter-container">
-      <el-input v-model="listQuery.username" placeholder="用户名" style="width: 150px;" class="filter-item" @keyup.enter.native="handleFilter" />
+      <!-- <el-input v-model="listQuery.username" placeholder="用户名" style="width: 150px;" class="filter-item" @keyup.enter.native="handleFilter" />
       <el-input v-model="listQuery.operation" placeholder="操作模块" style="width: 180px;" class="filter-item" @keyup.enter.native="handleFilter" />
       <el-date-picker
         v-model="listQuery.daterange"
@@ -18,7 +18,7 @@
       </el-button>
       <el-button v-waves :loading="downloadLoading" class="filter-item" type="primary" icon="el-icon-download" @click="handleDownload">
         导出
-      </el-button>
+      </el-button> -->
     </div>
 
     <el-table
@@ -51,24 +51,21 @@
           <span>{{ row.ipAddress }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="操作模块" prop="operation" min-width="160px" :show-overflow-tooltip="true"> {/* Changed label from "操作" to "操作模块" & adjusted width */}
+      <el-table-column label="操作模块" prop="operation" min-width="80px" :show-overflow-tooltip="true"> {/* Changed label from "操作" to "操作模块" & adjusted width */}
         <template slot-scope="{row}">
           <span>{{ row.operation }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="详情" prop="details" min-width="200px" :show-overflow-tooltip="true"> {/* Adjusted width */}
+      <el-table-column label="详情" prop="details" min-width="280px" :show-overflow-tooltip="true"> {/* Adjusted width */}
         <template slot-scope="{row}">
           <span>{{ row.details }}</span>
         </template>
       </el-table-column>
       <el-table-column label="操作" align="center" width="80px" class-name="small-padding fixed-width"> {/* Adjusted width to fit a compact button */}
         <template slot-scope="{row,$index}">
-          <el-button
-            size="mini"
-            type="danger"
-            plain
-            @click="handleDelete(row,$index)"
-          >删除</el-button>
+          <el-button v-if="row.status!='deleted'" size="mini" type="danger" @click="handleDelete(row,$index)">
+            删除
+          </el-button>
         </template>
       </el-table-column>
     </el-table>

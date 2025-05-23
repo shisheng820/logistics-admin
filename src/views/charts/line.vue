@@ -1,32 +1,16 @@
 <template>
-  <div :class="className" :style="{height:height,width:width}" />
+  <div class="chart-container simple-chart-wrapper">
+    <div ref="chart" :class="className" :style="{height:height,width:width}" />
+  </div>
 </template>
 
 <script>
 import echarts from 'echarts'
-require('echarts/theme/macarons') // echarts theme
+require('echarts/theme/macarons') // 保留你喜欢的主题
 import resize from './mixins/resize'
-// Removed API import: import { getMonthlyDomesticOutboundOrders } from '@/api/dataAnalysis'
+import { getOutboundDomesticMonthlyProportion } from '@/api/dataAnalysis'
 
-// Helper to generate last 24 months labels (YYYY-MM)
-function getLast24MonthsLabels() {
-  const months = []
-  const today = new Date()
-  for (let i = 23; i >= 0; i--) {
-    const d = new Date(today.getFullYear(), today.getMonth() - i, 1)
-    months.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`)
-  }
-  return months
-}
-
-const hardcodedOutboundData = {
-  months: getLast24MonthsLabels(),
-  // Example hardcoded counts for 24 months. Replace with your desired static values.
-  counts: [
-    120, 130, 140, 150, 135, 160, 170, 155, 165, 180, 190, 175, // Last year
-    130, 140, 155, 160, 145, 170, 180, 165, 175, 190, 200, 185 // Current year up to current month (approx)
-  ]
-}
+const animationDuration = 2800 // 保留上一版的美化动画时间
 
 export default {
   name: 'OutboundDomesticMonthlyChart',
@@ -42,23 +26,20 @@ export default {
     },
     height: {
       type: String,
-      default: '350px'
-    },
-    autoResize: {
-      type: Boolean,
-      default: true
+      default: '500px' // 保留较高的高度
     }
   },
   data() {
     return {
       chart: null,
-      chartData: hardcodedOutboundData // Use hardcoded data
+      chartData: {
+        xAxisData: [],
+        seriesData: []
+      }
     }
   },
   mounted() {
-    this.$nextTick(() => {
-      this.initChart()
-    })
+    this.fetchData()
   },
   beforeDestroy() {
     if (!this.chart) {
@@ -68,91 +49,148 @@ export default {
     this.chart = null
   },
   methods: {
-    // fetchData method is removed
-    initChart() {
-      this.chart = echarts.init(this.$el, 'macarons')
-      this.setOptions(this.chartData)
+    fetchData() {
+      getOutboundDomesticMonthlyProportion().then(response => {
+        this.chartData = response.data
+        this.$nextTick(() => {
+          this.initChart()
+        })
+      }).catch(error => {
+        console.error('获取出库月度数据失败:', error)
+        this.$message.error('数据加载失败，请稍后再试')
+      })
     },
-    setOptions({ months, counts } = {}) {
-      if (!this.chart || !months || !counts || months.length === 0 || counts.length === 0) {
-        if (this.chart) {
-          this.chart.clear()
-          this.chart.setOption({
-            title: { text: '近2年境内每月出库订单数', subtext: '无数据显示', left: 'center' },
-            xAxis: { data: [] },
-            yAxis: {},
-            series: [{ type: 'line', data: [] }]
-          })
-        }
-        return
-      }
+    initChart() {
+      if (!this.$refs.chart) return
+      this.chart = echarts.init(this.$refs.chart, 'macarons')
+
       this.chart.setOption({
         title: {
-          text: '近2年境内每月出库订单数',
-          left: 'center'
-        },
-        xAxis: {
-          data: months,
-          boundaryGap: true, // Keep true for line chart if you prefer start/end not on edge
-          axisTick: {
-            show: false
+          text: '月度境内出库订单统计',
+          subtext: '（最近24个月）', // 保留副标题
+          left: 'center',
+          top: '3%', // 调整标题距离顶部的距离，为图表留出空间
+          textStyle: {
+            fontSize: 18,
+            fontWeight: 'bold'
           }
-        },
-        grid: {
-          left: 10,
-          right: 30,
-          bottom: 20,
-          top: 50, // Increased top margin
-          containLabel: true
         },
         tooltip: {
           trigger: 'axis',
-          axisPointer: {
-            type: 'cross'
-          },
-          padding: [5, 10]
+          axisPointer: { // 修改这里
+            type: 'line', // 将十字准星 'cross' 改为 'line'，只在X轴上显示指示线
+            lineStyle: { // 可以设置线条样式，使其不那么突兀
+              color: '#888', // 例如灰色
+              type: 'dashed'
+            },
+            label: { // tooltip的axisPointer标签
+              show: true // 如果不希望显示Y轴的精确数字标签，可以设为false，但通常formatter已足够
+              // backgroundColor: '#6a7985' // 可以自定义标签背景色
+            }
+          }
+          // formatter 可以保持默认或按需自定义
         },
-        yAxis: {
-          name: '订单数',
-          type: 'value',
+        grid: {
+          left: '3%',
+          right: '4%',
+          bottom: '10%', // 为 dataZoom 留出空间
+          top: '18%', // 增加顶部留白，给标题和图表之间留出距离
+          containLabel: true
+        },
+        xAxis: {
+          type: 'category',
+          data: this.chartData.xAxisData,
+          boundaryGap: false,
           axisTick: {
-            show: false
+            alignWithLabel: true
+          },
+          axisLine: {
+            lineStyle: {
+              color: '#878d99'
+            }
           }
         },
-        legend: {
-          data: ['境内出库订单数'],
-          left: 'right',
-          top: '10px'
-        },
-        series: [{
-          name: '境内出库订单数',
-          smooth: true,
-          type: 'line',
-          itemStyle: {
-            normal: {
-              color: '#FF005A',
-              lineStyle: {
-                color: '#FF005A',
-                width: 2
-              },
-              // Optional: area style for line chart
-              areaStyle: {
-                color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{
-                  offset: 0,
-                  color: 'rgba(255, 0, 90, 0.3)'
-                }, {
-                  offset: 1,
-                  color: 'rgba(255, 0, 90, 0)'
-                }])
-              }
+        yAxis: {
+          type: 'value',
+          name: '订单数',
+          nameTextStyle: {
+            fontSize: 12,
+            padding: [0, 0, 0, -30]
+          },
+          axisTick: {
+            show: true
+          },
+          axisLine: {
+            show: true,
+            lineStyle: {
+              color: '#878d99'
             }
           },
-          data: counts,
-          animationDuration: 2800,
-          animationEasing: 'quadraticOut'
-        }]
+          splitLine: {
+            lineStyle: {
+              type: 'dashed',
+              color: '#dfe4ed'
+            }
+          }
+        },
+        series: [{
+          name: '月度订单数',
+          smooth: true,
+          type: 'line',
+          data: this.chartData.seriesData,
+          animationDuration: animationDuration,
+          animationEasing: 'cubicInOut',
+          markPoint: { // 保留标记点
+            data: [
+              { type: 'max', name: '最大值' },
+              { type: 'min', name: '最小值' }
+            ]
+          },
+          markLine: { // 保留平均线
+            data: [{ type: 'average', name: '平均值' }]
+          },
+          itemStyle: {
+            color: '#5470c6' // 可以保留或修改你喜欢的颜色
+          },
+          lineStyle: {
+            width: 2
+          },
+          areaStyle: {} // 保留区域填充
+        }],
+        dataZoom: [ // 保留数据区域缩放
+          {
+            type: 'slider', // 底部滑动条
+            start: 0,
+            end: 100, // 默认显示全部数据，用户可以拖动
+            height: 25, // 滑动条高度
+            bottom: '1%' // 滑动条位置
+          },
+          {
+            type: 'inside', // 内部滚轮缩放
+            start: 0,
+            end: 100
+          }
+        ]
+        // 移除了 toolbox
+        // toolbox: { ... }
       })
     }
   }
 }
 </script>
+
+<style scoped>
+.simple-chart-wrapper { /* 保持外部容器样式简洁统一 */
+  padding: 20px;
+  background-color: #fff;
+  border-radius: 8px; /* 之前的圆角是8px，可以按需调整 */
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1); /* 之前的阴影 */
+  margin: 20px auto;
+  width: 95%;
+  max-width: 1200px; /* 之前的最大宽度 */
+}
+.chart {
+  height: 100%;
+  width: 100%;
+}
+</style>

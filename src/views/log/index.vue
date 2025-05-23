@@ -95,7 +95,7 @@ export default {
       listLoading: true,
       listQuery: {
         page: 1,
-        limit: 20,
+        limit: 10,
         username: undefined,
         operation: undefined,
         // status: undefined, // Removed status from query

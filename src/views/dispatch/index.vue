@@ -116,16 +116,15 @@
 
 <script>
 import { fetchDispatchList, createDispatch, updateDispatch, deleteDispatch } from '@/api/dispatch'
-import waves from '@/directive/waves' // 水波纹指令
-import { parseTime } from '@/utils' // 时间格式化工具
-import Pagination from '@/components/Pagination' // 分页组件
+import waves from '@/directive/waves'
+import { parseTime } from '@/utils'
+import Pagination from '@/components/Pagination'
 
 export default {
   name: 'DispatchTable',
   components: { Pagination },
   directives: { waves },
   filters: {
-    // 注册过滤器，确保模板中的 `| parseTime` 能正确工作
     parseTime
   },
   data() {
@@ -136,11 +135,11 @@ export default {
       listLoading: true,
       listQuery: {
         page: 1,
-        limit: 20,
+        limit: 10,
         orderNumber: undefined,
         originalShelfNumber: undefined,
         newShelfNumber: undefined,
-        sort: '+id'
+        sort: '-dispatchTime'
       },
       temp: {
         id: undefined,
@@ -148,7 +147,7 @@ export default {
         cargoDetails: '',
         originalShelfNumber: '',
         newShelfNumber: '',
-        dispatchTime: new Date(),
+        dispatchTime: null,
         operator: ''
       },
       dialogFormVisible: false,
@@ -157,14 +156,14 @@ export default {
         update: '编辑调度记录',
         create: '新增调度记录'
       },
-      rules: {
+      rules: { // <--- 这里是修改点
         orderNumber: [{ required: true, message: '调度单号不能为空', trigger: 'blur' }],
         originalShelfNumber: [{ required: true, message: '原货架号不能为空', trigger: 'blur' }],
         newShelfNumber: [{ required: true, message: '新货架号不能为空', trigger: 'blur' }],
-        dispatchTime: [{ type: 'date', required: true, message: '调度时间不能为空', trigger: 'change' }], // 保持 date 类型，因为 el-date-picker type="date"
+        // 移除了 type: 'date'，仅保留必填校验
+        dispatchTime: [{ required: true, message: '调度时间不能为空', trigger: 'change' }],
         operator: [{ required: true, message: '操作员不能为空', trigger: 'blur' }]
-      },
-      downloadLoading: false
+      }
     }
   },
   created() {
@@ -178,9 +177,9 @@ export default {
         this.total = response.data.total
         this.listLoading = false
       }).catch(err => {
-        console.error('获取智能调度失败:', err)
+        console.error('获取调度列表失败:', err)
         this.$message({
-          message: '获取智能调度失败: ' + (err.message || '未知错误'),
+          message: '获取调度列表失败: ' + (err.message || '未知错误'),
           type: 'error',
           duration: 5 * 1000
         })
@@ -196,27 +195,10 @@ export default {
       if (order) {
         this.listQuery.sort = (order === 'ascending' ? '+' : '-') + prop
       } else {
-        this.listQuery.sort = '+id' // 默认排序
+        this.listQuery.sort = '-dispatchTime'
       }
       this.handleFilter()
     },
-    // sortByID 和 sortByTime 可以合并到 sortChange 中，如果不需要特别处理
-    // sortByID(order) {
-    //   if (order === 'ascending') {
-    //     this.listQuery.sort = '+id'
-    //   } else {
-    //     this.listQuery.sort = '-id'
-    //   }
-    //   this.handleFilter()
-    // },
-    // sortByTime(order, prop) {
-    //   if (order === 'ascending') {
-    //     this.listQuery.sort = `+${prop}`
-    //   } else {
-    //     this.listQuery.sort = `-${prop}`
-    //   }
-    //   this.handleFilter()
-    // },
     resetTemp() {
       this.temp = {
         id: undefined,
@@ -224,13 +206,13 @@ export default {
         cargoDetails: '',
         originalShelfNumber: '',
         newShelfNumber: '',
-        dispatchTime: null, // 对于日期选择器，设为null或具体日期字符串更好
+        dispatchTime: null,
         operator: ''
       }
     },
     handleCreate() {
       this.resetTemp()
-      this.temp.dispatchTime = parseTime(new Date(), '{y}-{m}-{d}') // 初始化为当前日期的字符串格式
+      this.temp.dispatchTime = parseTime(new Date(), '{y}-{m}-{d}')
       this.dialogStatus = 'create'
       this.dialogFormVisible = true
       this.$nextTick(() => {
@@ -242,8 +224,7 @@ export default {
         if (valid) {
           const tempData = { ...this.temp }
           delete tempData.id
-          // dispatchTime 由 value-format="yyyy-MM-dd" 处理，已经是字符串
-          createDispatch(tempData).then(() => {
+          createDispatch(tempData).then(() => { // tempData.dispatchTime 已经是 'yyyy-MM-dd' 格式
             this.dialogFormVisible = false
             this.$notify({
               title: '成功',
@@ -266,7 +247,6 @@ export default {
     },
     handleUpdate(row) {
       this.temp = Object.assign({}, row)
-      // 确保 temp.dispatchTime 是 'yyyy-MM-dd' 格式的字符串，以便 el-date-picker 正确显示
       if (this.temp.dispatchTime) {
         this.temp.dispatchTime = parseTime(this.temp.dispatchTime, '{y}-{m}-{d}')
       }
@@ -280,8 +260,7 @@ export default {
       this.$refs['dataForm'].validate((valid) => {
         if (valid) {
           const tempData = { ...this.temp }
-          // dispatchTime 由 value-format="yyyy-MM-dd" 处理，已经是字符串
-          updateDispatch(tempData).then(() => {
+          updateDispatch(tempData).then(() => { // tempData.dispatchTime 已经是 'yyyy-MM-dd' 格式
             this.dialogFormVisible = false
             this.$notify({
               title: '成功',

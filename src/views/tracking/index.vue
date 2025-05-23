@@ -134,7 +134,7 @@ export default {
       listLoading: true,
       listQuery: {
         page: 1,
-        limit: 20,
+        limit: 10,
         orderNumber: undefined,
         currentLocation: undefined,
         sort: '-id'

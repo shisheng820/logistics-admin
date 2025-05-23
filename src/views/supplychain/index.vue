@@ -126,7 +126,7 @@ export default {
       listLoading: true,
       listQuery: {
         page: 1,
-        limit: 20,
+        limit: 10,
         supplierName: undefined,
         contactPerson: undefined,
         sort: '-id'

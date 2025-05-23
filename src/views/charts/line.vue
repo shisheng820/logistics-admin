@@ -6,14 +6,14 @@
 
 <script>
 import echarts from 'echarts'
-require('echarts/theme/macarons') // 保留你喜欢的主题
+require('echarts/theme/macarons') // 保留主题
 import resize from './mixins/resize'
 import { getOutboundDomesticMonthlyProportion } from '@/api/dataAnalysis'
 
-const animationDuration = 10 // 保留上一版的美化动画时间
+const animationDuration = 2000
 
 export default {
-  name: 'OutboundDomesticMonthlyChart',
+  name: 'OutboundDomesticMonthlyPercentageChart', // 更新组件名
   mixins: [resize],
   props: {
     className: {
@@ -26,7 +26,7 @@ export default {
     },
     height: {
       type: String,
-      default: '500px' // 保留较高的高度
+      default: '450px'
     }
   },
   data() {
@@ -34,7 +34,8 @@ export default {
       chart: null,
       chartData: {
         xAxisData: [],
-        seriesData: []
+        seriesData: [], // 这将存储百分比数据
+        actualCountsData: [] // 新增：用于存储原始订单数，以便在 tooltip 中显示
       }
     }
   },
@@ -51,7 +52,25 @@ export default {
   methods: {
     fetchData() {
       getOutboundDomesticMonthlyProportion().then(response => {
-        this.chartData = response.data
+        const { xAxisData, seriesData: monthlyCounts } = response.data // seriesData 现在是每月订单数
+
+        if (!xAxisData || !monthlyCounts || xAxisData.length !== monthlyCounts.length) {
+          console.error('月度出库订单数据格式不正确')
+          this.$message.error('数据加载失败，格式错误')
+          return
+        }
+
+        const totalOrdersInPeriod = monthlyCounts.reduce((sum, count) => sum + count, 0)
+        const percentageData = monthlyCounts.map(count => {
+          return totalOrdersInPeriod > 0 ? parseFloat(((count / totalOrdersInPeriod) * 100).toFixed(2)) : 0
+        })
+
+        this.chartData = {
+          xAxisData,
+          seriesData: percentageData, // 折线图系列数据现在是百分比
+          actualCountsData: monthlyCounts // 存储原始数量用于tooltip
+        }
+
         this.$nextTick(() => {
           this.initChart()
         })
@@ -66,10 +85,9 @@ export default {
 
       this.chart.setOption({
         title: {
-          text: '月度境内出库订单统计',
-          subtext: '（最近24个月）', // 保留副标题
+          text: '近两年境内每月出库订单数占比', // 更新标题
           left: 'center',
-          top: '3%', // 调整标题距离顶部的距离，为图表留出空间
+          top: '5%',
           textStyle: {
             fontSize: 18,
             fontWeight: 'bold'
@@ -77,24 +95,30 @@ export default {
         },
         tooltip: {
           trigger: 'axis',
-          axisPointer: { // 修改这里
-            type: 'line', // 将十字准星 'cross' 改为 'line'，只在X轴上显示指示线
-            lineStyle: { // 可以设置线条样式，使其不那么突兀
-              color: '#888', // 例如灰色
-              type: 'dashed'
+          axisPointer: {
+            type: 'line',
+            lineStyle: {
+              color: 'rgba(0,0,0,0.1)'
             },
-            label: { // tooltip的axisPointer标签
-              show: true // 如果不希望显示Y轴的精确数字标签，可以设为false，但通常formatter已足够
-              // backgroundColor: '#6a7985' // 可以自定义标签背景色
+            label: {
+              show: false
             }
+          },
+          formatter: (params) => {
+            let res = params[0].name // X轴数据 (月份)
+            params.forEach((item, index) => {
+              // item.value 现在是百分比
+              const actualCount = this.chartData.actualCountsData[item.dataIndex] // 获取原始数量
+              res += `<br/>${item.marker}${item.seriesName}: ${item.value}% (数量: ${actualCount} 单)`
+            })
+            return res
           }
-          // formatter 可以保持默认或按需自定义
         },
         grid: {
           left: '3%',
           right: '4%',
-          bottom: '10%', // 为 dataZoom 留出空间
-          top: '18%', // 增加顶部留白，给标题和图表之间留出距离
+          bottom: '10%',
+          top: '22%',
           containLabel: true
         },
         xAxis: {
@@ -112,10 +136,10 @@ export default {
         },
         yAxis: {
           type: 'value',
-          name: '订单数',
+          name: '订单占比 (%)', // Y轴名称更新
           nameTextStyle: {
             fontSize: 12,
-            padding: [0, 0, 0, -30]
+            padding: [0, 0, 0, 0] // 根据实际情况调整Y轴名称的padding
           },
           axisTick: {
             show: true
@@ -131,48 +155,58 @@ export default {
               type: 'dashed',
               color: '#dfe4ed'
             }
+          },
+          axisLabel: {
+            formatter: '{value} %' // Y轴刻度标签添加百分号
           }
+          // min: 0, // 可以考虑设置Y轴最小值
+          // max: 100, // 如果所有数据都是0-100的百分比，可以设置最大值
         },
         series: [{
-          name: '月度订单数',
+          name: '月度订单占比', // 系列名称更新
           smooth: true,
           type: 'line',
-          data: this.chartData.seriesData,
+          data: this.chartData.seriesData, // 使用计算出的百分比数据
           animationDuration: animationDuration,
           animationEasing: 'cubicInOut',
-          markPoint: { // 保留标记点
-            data: [
-              { type: 'max', name: '最大值' },
-              { type: 'min', name: '最小值' }
-            ]
-          },
-          markLine: { // 保留平均线
-            data: [{ type: 'average', name: '平均值' }]
-          },
+          showSymbol: true,
+          symbolSize: 6,
           itemStyle: {
-            color: '#5470c6' // 可以保留或修改你喜欢的颜色
+            color: '#f3a633' // 更换一个颜色，例如橙色系，与之前的饼图区分
           },
           lineStyle: {
             width: 2
           },
-          areaStyle: {} // 保留区域填充
+          areaStyle: { // 可以保留或调整面积图样式
+            opacity: 0.2
+            // color: '#f3a633' // 面积图颜色可以与线条一致或略浅
+          }
+          // markPoint 和 markLine 如果基于百分比数据仍有意义，可以保留或调整
+          // 例如标记百分比的峰值
+          // markPoint: {
+          //   data: [
+          //     { type: 'max', name: '最高占比' },
+          //     { type: 'min', name: '最低占比' }
+          //   ]
+          // },
+          // markLine: {
+          //   data: [{ type: 'average', name: '平均占比' }]
+          // }
         }],
-        dataZoom: [ // 保留数据区域缩放
+        dataZoom: [
           {
-            type: 'slider', // 底部滑动条
+            type: 'slider',
             start: 0,
-            end: 100, // 默认显示全部数据，用户可以拖动
-            height: 25, // 滑动条高度
-            bottom: '1%' // 滑动条位置
+            end: 100,
+            height: 25,
+            bottom: '1%'
           },
           {
-            type: 'inside', // 内部滚轮缩放
+            type: 'inside',
             start: 0,
             end: 100
           }
         ]
-        // 移除了 toolbox
-        // toolbox: { ... }
       })
     }
   }
@@ -180,14 +214,14 @@ export default {
 </script>
 
 <style scoped>
-.simple-chart-wrapper { /* 保持外部容器样式简洁统一 */
+.simple-chart-wrapper {
   padding: 20px;
   background-color: #fff;
-  border-radius: 8px; /* 之前的圆角是8px，可以按需调整 */
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1); /* 之前的阴影 */
+  border-radius: 8px;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
   margin: 20px auto;
   width: 95%;
-  max-width: 1200px; /* 之前的最大宽度 */
+  max-width: 1200px;
 }
 .chart {
   height: 100%;

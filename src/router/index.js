@@ -129,7 +129,7 @@ export const asyncRoutes = [
     redirect: '/inbound-monthly-orders/index',
     name: 'InboundMonthlyOrdersRoot',
     meta: {
-      title: '月度入库订单统计',
+      title: '入库统计',
       icon: 'el-icon-pie-chart',
       alwaysShow: true
     },
@@ -147,7 +147,7 @@ export const asyncRoutes = [
     redirect: '/outbound-domestic-monthly-orders/index',
     name: 'OutboundDomesticMonthlyOrdersRoot',
     meta: {
-      title: '月度境内出库订单统计',
+      title: '出库统计',
       icon: 'el-icon-s-data',
       alwaysShow: true
     },

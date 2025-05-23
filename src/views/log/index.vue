@@ -2,10 +2,7 @@
   <div class="app-container">
     <div class="filter-container">
       <el-input v-model="listQuery.username" placeholder="用户名" style="width: 150px;" class="filter-item" @keyup.enter.native="handleFilter" />
-      <el-input v-model="listQuery.operation" placeholder="操作" style="width: 180px;" class="filter-item" @keyup.enter.native="handleFilter" />
-      <el-select v-model="listQuery.status" placeholder="状态" clearable style="width: 110px" class="filter-item">
-        <el-option v-for="item in statusOptions" :key="item" :label="item" :value="item" />
-      </el-select>
+      <el-input v-model="listQuery.operation" placeholder="操作模块" style="width: 180px;" class="filter-item" @keyup.enter.native="handleFilter" />
       <el-date-picker
         v-model="listQuery.daterange"
         type="datetimerange"
@@ -39,44 +36,37 @@
           <span>{{ row.id }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="时间戳" prop="timestamp" sortable="custom" width="150px" align="center" :class-name="getSortClass('timestamp')">
+      <el-table-column label="时间戳" prop="timestamp" sortable="custom" width="160px" align="center" :class-name="getSortClass('timestamp')"> {/* Adjusted width */}
         <template slot-scope="{row}">
           <span>{{ row.timestamp | parseTime('{y}-{m}-{d} {h}:{i}:{s}') }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="用户名" prop="username" width="90px" align="center">
+      <el-table-column label="用户名" prop="username" width="100px" align="center" :show-overflow-tooltip="true"> {/* Adjusted width & added tooltip */}
         <template slot-scope="{row}">
           <span>{{ row.username }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="IP地址" prop="ipAddress" width="110px" align="center">
+      <el-table-column label="IP地址" prop="ipAddress" width="120px" align="center"> {/* Adjusted width */}
         <template slot-scope="{row}">
           <span>{{ row.ipAddress }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="操作" prop="operation" min-width="50px">
+      <el-table-column label="操作模块" prop="operation" min-width="160px" :show-overflow-tooltip="true"> {/* Changed label from "操作" to "操作模块" & adjusted width */}
         <template slot-scope="{row}">
           <span>{{ row.operation }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="详情" prop="details" min-width="280px" :show-overflow-tooltip="true">
+      <el-table-column label="详情" prop="details" min-width="200px" :show-overflow-tooltip="true"> {/* Adjusted width */}
         <template slot-scope="{row}">
           <span>{{ row.details }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="状态" prop="status" class-name="status-col" width="80px">
-        <template slot-scope="{row}">
-          <el-tag :type="row.status === '成功' ? 'success' : (row.status === '失败' ? 'danger' : 'warning')">
-            {{ row.status }}
-          </el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column label="操作" align="center" width="70px" class-name="small-padding fixed-width">
+      <el-table-column label="操作" align="center" width="80px" class-name="small-padding fixed-width"> {/* Adjusted width to fit a compact button */}
         <template slot-scope="{row,$index}">
           <el-button
             size="mini"
             type="danger"
-            class="compact-btn"
+            plain
             @click="handleDelete(row,$index)"
           >删除</el-button>
         </template>
@@ -88,7 +78,7 @@
 </template>
 
 <script>
-import { fetchLogList, deleteLog } from '@/api/log' // 移除 deleteMultipleLogs
+import { fetchLogList, deleteLog } from '@/api/log' // Removed deleteMultipleLogs as its button is removed from template
 import waves from '@/directive/waves'
 import { parseTime } from '@/utils'
 import Pagination from '@/components/Pagination'
@@ -97,7 +87,7 @@ export default {
   name: 'LogTable',
   components: { Pagination },
   directives: { waves },
-  filters: {
+  filters: { // Ensure parseTime is available if not globally registered
     parseTime
   },
   data() {
@@ -111,12 +101,13 @@ export default {
         limit: 20,
         username: undefined,
         operation: undefined,
-        status: undefined,
+        // status: undefined, // Removed status from query
         daterange: [],
         sort: '-id'
       },
-      statusOptions: ['成功', '失败', '警告'],
+      // statusOptions: ['成功', '失败', '警告'], // Removed status options
       downloadLoading: false
+      // multipleSelection: [] // Removed as batch delete functionality is not present in the template
     }
   },
   created() {
@@ -125,7 +116,9 @@ export default {
   methods: {
     getList() {
       this.listLoading = true
-      fetchLogList(this.listQuery).then(response => {
+      const queryToSend = { ...this.listQuery }
+      delete queryToSend.status // Ensure status is not part of the query
+      fetchLogList(queryToSend).then(response => {
         this.list = response.data.items
         this.total = response.data.total
         this.listLoading = false
@@ -147,7 +140,7 @@ export default {
       return sort === `+${key}` ? 'ascending' : sort === `-${key}` ? 'descending' : ''
     },
     handleDelete(row, index) {
-      this.$confirm(`确认删除ID为 ${row.id} 的日志吗?`, '警告', {
+      this.$confirm(`确认删除ID为 ${row.id} 的日志吗? 此操作不可恢复。`, '警告', { // Added emphasis to confirmation
         confirmButtonText: '确认删除',
         cancelButtonText: '取消',
         type: 'warning'
@@ -165,7 +158,7 @@ export default {
         } catch (error) {
           this.$notify({
             title: '失败',
-            message: '删除失败',
+            message: '删除失败: ' + (error.message || '未知错误'),
             type: 'error',
             duration: 2000
           })
@@ -180,8 +173,8 @@ export default {
     handleDownload() {
       this.downloadLoading = true
       import('@/vendor/Export2Excel').then(excel => {
-        const tHeader = ['ID', '时间戳', '用户名', 'IP地址', '操作', '详情', '状态']
-        const filterVal = ['id', 'timestamp', 'username', 'ipAddress', 'operation', 'details', 'status']
+        const tHeader = ['ID', '时间戳', '用户名', 'IP地址', '操作模块', '详情'] // Removed '状态'
+        const filterVal = ['id', 'timestamp', 'username', 'ipAddress', 'operation', 'details'] // Removed 'status'
         const data = this.formatJsonForExport(filterVal, this.list)
         excel.export_json_to_excel({
           header: tHeader,
@@ -192,9 +185,10 @@ export default {
       })
     },
     formatJsonForExport(filterVal, jsonData) {
-      return jsonData.map(v => filterVal.map(j => {
+      const listToFormat = jsonData || [] // Ensure jsonData is not null
+      return listToFormat.map(v => filterVal.map(j => {
         if (j === 'timestamp') {
-          return parseTime(v[j])
+          return parseTime(v[j]) // Full timestamp for export
         }
         return v[j]
       }))
@@ -207,25 +201,6 @@ export default {
 .filter-container .filter-item {
   margin-bottom: 10px;
 }
-
-.compact-btn {
-  padding: 5px 8px;
-  font-size: 12px;
-}
-
-.status-col {
-  min-width: 70px;
-}
-
-.el-table-column[prop="ipAddress"] {
-  width: 110px;
-}
-
-.el-table-column[prop="timestamp"] {
-  width: 150px;
-}
-
-.el-table-column[prop="username"] {
-  width: 90px;
-}
+/* Removed .compact-btn and .status-col as they are not strictly needed with these changes */
+/* Removed specific column width styles from <style> as they are now directly on <el-table-column> or managed by min-width */
 </style>

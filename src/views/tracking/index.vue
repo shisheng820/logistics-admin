@@ -1,11 +1,6 @@
 <template>
   <div class="app-container">
     <div class="filter-container">
-      <!-- <el-input v-model="listQuery.orderNumber" placeholder="订单编号" style="width: 130px;" class="filter-item" @keyup.enter.native="handleFilter" />
-      <el-input v-model="listQuery.currentLocation" placeholder="当前位置" style="width: 150px;" class="filter-item" @keyup.enter.native="handleFilter" />
-      <el-button v-waves class="filter-item" type="primary" icon="el-icon-search" @click="handleFilter" style="margin-left: 10px;">
-        搜索
-      </el-button> -->
       <el-button class="filter-item" style="margin-left: 10px;" type="primary" icon="el-icon-edit" @click="handleCreate">
         新增
       </el-button>
@@ -31,37 +26,42 @@
           <span>{{ row.orderNumber }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="上一站" prop="previousLocation" min-width="140px" :show-overflow-tooltip="true">
+      <el-table-column label="上一站地址" prop="previousLocation" min-width="130px" :show-overflow-tooltip="true">
         <template slot-scope="{row}">
           <span>{{ row.previousLocation }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="当前位置" prop="currentLocation" min-width="140px" :show-overflow-tooltip="true">
+      <el-table-column label="当前地址" prop="currentLocation" min-width="130px" :show-overflow-tooltip="true">
         <template slot-scope="{row}">
           <span>{{ row.currentLocation }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="联系人" prop="currentLocationContactPerson" width="80px" align="center">
+      <el-table-column label="当前联系人" prop="currentLocationContactPerson" width="100px" align="center" :show-overflow-tooltip="true">
         <template slot-scope="{row}">
           <span>{{ row.currentLocationContactPerson }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="联系电话" prop="currentLocationContactPhone" width="110px" align="center">
+      <el-table-column label="当前联系电话" prop="currentLocationContactPhone" width="110px" align="center">
         <template slot-scope="{row}">
           <span>{{ row.currentLocationContactPhone }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="备注/状态" prop="remarks" min-width="130px" :show-overflow-tooltip="true">
+      <el-table-column label="备注" prop="remarks" min-width="120px" :show-overflow-tooltip="true">
         <template slot-scope="{row}">
           <span>{{ row.remarks }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="更新日期" prop="updateTime" sortable="custom" width="110px" align="center" :class-name="getSortClass('updateTime')">
+      <el-table-column label="新增日期" prop="createTime" sortable="custom" width="100px" align="center" :class-name="getSortClass('createTime')">
+        <template slot-scope="{row}">
+          <span>{{ row.createTime | parseTime('{y}-{m}-{d}') }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="修改日期" prop="updateTime" sortable="custom" width="100px" align="center" :class-name="getSortClass('updateTime')">
         <template slot-scope="{row}">
           <span>{{ row.updateTime | parseTime('{y}-{m}-{d}') }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="操作员" prop="operator" width="90px" align="center">
+      <el-table-column label="操作员" prop="operator" width="80px" align="center">
         <template slot-scope="{row}">
           <span>{{ row.operator }}</span>
         </template>
@@ -81,23 +81,23 @@
     <pagination v-show="total>0" :total="total" :page.sync="listQuery.page" :limit.sync="listQuery.limit" @pagination="getList" />
 
     <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible">
-      <el-form ref="dataForm" :rules="rules" :model="temp" label-position="left" label-width="100px" style="width: 450px; margin-left:50px;">
+      <el-form ref="dataForm" :rules="rules" :model="temp" label-position="left" label-width="110px" style="width: 450px; margin-left:50px;">
         <el-form-item label="订单编号" prop="orderNumber">
           <el-input v-model="temp.orderNumber" />
         </el-form-item>
-        <el-form-item label="上一站" prop="previousLocation">
+        <el-form-item label="上一站地址" prop="previousLocation">
           <el-input v-model="temp.previousLocation" />
         </el-form-item>
-        <el-form-item label="当前位置" prop="currentLocation">
+        <el-form-item label="当前地址" prop="currentLocation">
           <el-input v-model="temp.currentLocation" />
         </el-form-item>
-        <el-form-item label="联系人" prop="currentLocationContactPerson">
+        <el-form-item label="当前联系人" prop="currentLocationContactPerson">
           <el-input v-model="temp.currentLocationContactPerson" />
         </el-form-item>
-        <el-form-item label="联系电话" prop="currentLocationContactPhone">
+        <el-form-item label="当前联系电话" prop="currentLocationContactPhone">
           <el-input v-model="temp.currentLocationContactPhone" />
         </el-form-item>
-        <el-form-item label="备注/状态" prop="remarks">
+        <el-form-item label="备注" prop="remarks">
           <el-input v-model="temp.remarks" type="textarea" :rows="2" />
         </el-form-item>
         <el-form-item label="操作员" prop="operator">
@@ -118,7 +118,7 @@
 
 <script>
 import { fetchTrackingList, createTracking, updateTracking, deleteTracking } from '@/api/tracking'
-import waves from '@/directive/waves' // waves directive
+import waves from '@/directive/waves'
 import { parseTime } from '@/utils'
 import Pagination from '@/components/Pagination'
 
@@ -147,9 +147,8 @@ export default {
         currentLocationContactPerson: '',
         currentLocationContactPhone: '',
         remarks: '',
-        operator: '',
-        createTime: undefined,
-        updateTime: undefined
+        operator: ''
+        // createTime and updateTime are not directly managed in form temp
       },
       dialogFormVisible: false,
       dialogStatus: '',
@@ -204,10 +203,10 @@ export default {
     createData() {
       this.$refs['dataForm'].validate((valid) => {
         if (valid) {
-          createTracking(this.temp).then((response) => {
-            this.list.unshift(response.data.item)
+          const dataToSend = { ...this.temp }
+          // createTime and updateTime will be set by mock
+          createTracking(dataToSend).then(() => {
             this.dialogFormVisible = false
-            this.total++
             this.$notify({
               title: '成功',
               message: '创建成功',
@@ -221,6 +220,7 @@ export default {
     },
     handleUpdate(row) {
       this.temp = Object.assign({}, row)
+      // No date picker for these fields in this form
       this.dialogStatus = 'update'
       this.dialogFormVisible = true
       this.$nextTick(() => {
@@ -230,10 +230,10 @@ export default {
     updateData() {
       this.$refs['dataForm'].validate((valid) => {
         if (valid) {
-          const tempData = Object.assign({}, this.temp)
+          const tempData = { ...this.temp }
+          // updateTime will be set by mock
           updateTracking(tempData).then(() => {
-            const index = this.list.findIndex(v => v.id === this.temp.id)
-            this.list.splice(index, 1, this.temp)
+            this.getList()
             this.dialogFormVisible = false
             this.$notify({
               title: '成功',
@@ -246,8 +246,8 @@ export default {
       })
     },
     handleDelete(row, index) {
-      this.$confirm('确认删除该条记录吗?', '警告', {
-        confirmButtonText: '确认',
+      this.$confirm('确认删除该条追踪记录吗?', '警告', {
+        confirmButtonText: '确认删除',
         cancelButtonText: '取消',
         type: 'warning'
       }).then(async() => {
@@ -270,10 +270,9 @@ export default {
     handleDownload() {
       this.downloadLoading = true
       import('@/vendor/Export2Excel').then(excel => {
-        const tHeader = ['ID', '订单编号', '上一站', '当前位置', '联系人', '联系电话', '备注/状态', '订单创建时间', '状态更新日期', '操作员']
+        const tHeader = ['ID', '订单编号', '上一站地址', '当前地址', '当前地址联系人', '当前地址联系电话', '备注', '新增日期', '修改日期', '操作员']
         const filterVal = ['id', 'orderNumber', 'previousLocation', 'currentLocation', 'currentLocationContactPerson', 'currentLocationContactPhone', 'remarks', 'createTime', 'updateTime', 'operator']
-        const list = this.list
-        const data = this.formatJson(filterVal, list)
+        const data = this.formatJsonForExport(filterVal)
         excel.export_json_to_excel({
           header: tHeader,
           data,
@@ -282,11 +281,10 @@ export default {
         this.downloadLoading = false
       })
     },
-    formatJson(filterVal, jsonData) {
-      return jsonData.map(v => filterVal.map(j => {
-        if (j === 'createTime') {
-          return parseTime(v[j], '{y}-{m}-{d} {h}:{i}')
-        } else if (j === 'updateTime') {
+    formatJsonForExport(filterVal) {
+      const listToFormat = this.list || []
+      return listToFormat.map(v => filterVal.map(j => {
+        if (['createTime', 'updateTime'].includes(j)) {
           return parseTime(v[j], '{y}-{m}-{d}')
         } else {
           return v[j]
@@ -296,24 +294,9 @@ export default {
     sortChange(data) {
       const { prop, order } = data
       if (prop === 'id') {
-        this.sortByID(order)
-      } else if (prop === 'updateTime' || prop === 'createTime') {
-        this.sortByTime(order, prop)
-      }
-    },
-    sortByID(order) {
-      if (order === 'ascending') {
-        this.listQuery.sort = '+id'
-      } else {
-        this.listQuery.sort = '-id'
-      }
-      this.handleFilter()
-    },
-    sortByTime(order, field) {
-      if (order === 'ascending') {
-        this.listQuery.sort = `+${field}`
-      } else {
-        this.listQuery.sort = `-${field}`
+        this.listQuery.sort = (order === 'ascending' ? '+' : '-') + prop
+      } else if (['createTime', 'updateTime'].includes(prop)) {
+        this.listQuery.sort = (order === 'ascending' ? '+' : '-') + prop
       }
       this.handleFilter()
     },

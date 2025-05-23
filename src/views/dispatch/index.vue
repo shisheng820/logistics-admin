@@ -1,18 +1,9 @@
 <template>
   <div class="app-container">
     <div class="filter-container">
-      <!-- <el-input v-model="listQuery.orderNumber" placeholder="订单编号" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
-      <el-input v-model="listQuery.originalShelfNumber" placeholder="原货架号" style="width: 150px;" class="filter-item" @keyup.enter.native="handleFilter" />
-      <el-input v-model="listQuery.newShelfNumber" placeholder="新货架号" style="width: 150px;" class="filter-item" @keyup.enter.native="handleFilter" />
-      <el-button v-waves class="filter-item" type="primary" icon="el-icon-search" @click="handleFilter">
-        搜索
-      </el-button> -->
       <el-button class="filter-item" style="margin-left: 10px;" type="primary" icon="el-icon-edit" @click="handleCreate">
         新增
       </el-button>
-      <!-- <el-button v-waves :loading="downloadLoading" class="filter-item" type="primary" icon="el-icon-download" @click="handleDownload">
-        导出
-      </el-button> -->
     </div>
 
     <el-table
@@ -25,47 +16,52 @@
       style="width: 100%;"
       @sort-change="sortChange"
     >
-      <el-table-column label="ID" prop="id" sortable="custom" align="center" width="80" :class-name="getSortClass('id')">
+      <el-table-column label="ID" prop="id" sortable="custom" align="center" width="60" :class-name="getSortClass('id')">
         <template slot-scope="{row}">
           <span>{{ row.id }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="订单编号" prop="orderNumber" width="150px" align="center">
+      <el-table-column label="订单编号" prop="orderNumber" width="130px" align="center">
         <template slot-scope="{row}">
           <span>{{ row.orderNumber }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="货物详情" prop="cargoDetails" min-width="200px">
+      <el-table-column label="货物详情备注" prop="cargoDetails" min-width="180px" :show-overflow-tooltip="true">
         <template slot-scope="{row}">
           <span>{{ row.cargoDetails }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="原货架号" prop="originalShelfNumber" width="120px" align="center">
+      <el-table-column label="原货架编号" prop="originalShelfNumber" width="110px" align="center">
         <template slot-scope="{row}">
           <span>{{ row.originalShelfNumber }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="新货架号" prop="newShelfNumber" width="120px" align="center">
+      <el-table-column label="调度后货架号" prop="newShelfNumber" width="120px" align="center">
         <template slot-scope="{row}">
           <span>{{ row.newShelfNumber }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="调度时间" prop="dispatchTime" sortable="custom" width="160px" align="center" :class-name="getSortClass('dispatchTime')">
+      <el-table-column label="调度日期" prop="dispatchTime" sortable="custom" width="110px" align="center" :class-name="getSortClass('dispatchTime')">
         <template slot-scope="{row}">
-          <span>{{ row.dispatchTime | parseTime('{y}-{m}-{d} {h}:{i}') }}</span>
+          <span>{{ row.dispatchTime | parseTime('{y}-{m}-{d}') }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="创建时间" prop="createTime" sortable="custom" width="160px" align="center" :class-name="getSortClass('createTime')">
+      <el-table-column label="新增日期" prop="createTime" sortable="custom" width="110px" align="center" :class-name="getSortClass('createTime')">
         <template slot-scope="{row}">
-          <span>{{ row.createTime | parseTime('{y}-{m}-{d} {h}:{i}') }}</span>
+          <span>{{ row.createTime | parseTime('{y}-{m}-{d}') }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="操作员" prop="operator" width="110px" align="center">
+      <el-table-column label="修改日期" prop="updateTime" sortable="custom" width="110px" align="center" :class-name="getSortClass('updateTime')">
+        <template slot-scope="{row}">
+          <span>{{ row.updateTime | parseTime('{y}-{m}-{d}') }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="操作员" prop="operator" width="90px" align="center">
         <template slot-scope="{row}">
           <span>{{ row.operator }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="center" width="230" class-name="small-padding fixed-width">
+      <el-table-column label="操作" align="center" width="150" class-name="small-padding fixed-width">
         <template slot-scope="{row,$index}">
           <el-button type="primary" size="mini" @click="handleUpdate(row)">
             编辑
@@ -80,21 +76,21 @@
     <pagination v-show="total>0" :total="total" :page.sync="listQuery.page" :limit.sync="listQuery.limit" @pagination="getList" />
 
     <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible">
-      <el-form ref="dataForm" :rules="rules" :model="temp" label-position="left" label-width="100px" style="width: 400px; margin-left:50px;">
+      <el-form ref="dataForm" :rules="rules" :model="temp" label-position="left" label-width="120px" style="width: 450px; margin-left:50px;">
         <el-form-item label="订单编号" prop="orderNumber">
           <el-input v-model="temp.orderNumber" />
         </el-form-item>
-        <el-form-item label="货物详情" prop="cargoDetails">
-          <el-input v-model="temp.cargoDetails" type="textarea" :rows="3" />
+        <el-form-item label="货物详情备注" prop="cargoDetails">
+          <el-input v-model="temp.cargoDetails" type="textarea" :rows="2" />
         </el-form-item>
-        <el-form-item label="原货架号" prop="originalShelfNumber">
+        <el-form-item label="原货架编号" prop="originalShelfNumber">
           <el-input v-model="temp.originalShelfNumber" />
         </el-form-item>
-        <el-form-item label="新货架号" prop="newShelfNumber">
+        <el-form-item label="调度后货架号" prop="newShelfNumber">
           <el-input v-model="temp.newShelfNumber" />
         </el-form-item>
-        <el-form-item label="调度时间" prop="dispatchTime">
-          <el-date-picker v-model="temp.dispatchTime" type="datetime" placeholder="请选择时间" value-format="yyyy-MM-dd HH:mm:ss" style="width:100%" />
+        <el-form-item label="调度日期" prop="dispatchTime">
+          <el-date-picker v-model="temp.dispatchTime" type="date" placeholder="选择日期" value-format="yyyy-MM-dd" style="width:100%" />
         </el-form-item>
         <el-form-item label="操作员" prop="operator">
           <el-input v-model="temp.operator" />
@@ -114,9 +110,9 @@
 
 <script>
 import { fetchDispatchList, createDispatch, updateDispatch, deleteDispatch } from '@/api/dispatch'
-import waves from '@/directive/waves' // waves directive
+import waves from '@/directive/waves'
 import { parseTime } from '@/utils'
-import Pagination from '@/components/Pagination' // secondary package based on el-pagination
+import Pagination from '@/components/Pagination'
 
 export default {
   name: 'DispatchTable',
@@ -134,7 +130,7 @@ export default {
         orderNumber: undefined,
         originalShelfNumber: undefined,
         newShelfNumber: undefined,
-        sort: '-id' // Default sort by ID descending
+        sort: '-id'
       },
       temp: {
         id: undefined,
@@ -142,7 +138,7 @@ export default {
         cargoDetails: '',
         originalShelfNumber: '',
         newShelfNumber: '',
-        dispatchTime: parseTime(new Date(), '{y}-{m}-{d} {h}:{i}:{s}'),
+        dispatchTime: parseTime(new Date(), '{y}-{m}-{d}'),
         operator: ''
       },
       dialogFormVisible: false,
@@ -153,10 +149,10 @@ export default {
       },
       rules: {
         orderNumber: [{ required: true, message: '订单编号为必填项', trigger: 'blur' }],
-        cargoDetails: [{ required: true, message: '货物详情为必填项', trigger: 'blur' }],
-        originalShelfNumber: [{ required: true, message: '原货架号为必填项', trigger: 'blur' }],
-        newShelfNumber: [{ required: true, message: '新货架号为必填项', trigger: 'blur' }],
-        dispatchTime: [{ type: 'string', required: true, message: '调度时间为必填项', trigger: 'change' }],
+        // cargoDetails might be optional for dispatch if only shelves are changed
+        originalShelfNumber: [{ required: true, message: '原货架编号为必填项', trigger: 'blur' }],
+        newShelfNumber: [{ required: true, message: '调度后货架号为必填项', trigger: 'blur' }],
+        dispatchTime: [{ type: 'string', required: true, message: '调度日期为必填项', trigger: 'change' }],
         operator: [{ required: true, message: '操作员为必填项', trigger: 'blur' }]
       },
       downloadLoading: false
@@ -185,8 +181,8 @@ export default {
         cargoDetails: '',
         originalShelfNumber: '',
         newShelfNumber: '',
-        dispatchTime: parseTime(new Date(), '{y}-{m}-{d} {h}:{i}:{s}'),
-        operator: ''
+        dispatchTime: parseTime(new Date(), '{y}-{m}-{d}'),
+        operator: this.$store.getters.name || ''
       }
     },
     handleCreate() {
@@ -200,10 +196,12 @@ export default {
     createData() {
       this.$refs['dataForm'].validate((valid) => {
         if (valid) {
-          createDispatch(this.temp).then((response) => {
-            this.list.unshift(response.data.item)
+          const dataToSend = { ...this.temp }
+          if (dataToSend.dispatchTime && dataToSend.dispatchTime.length === 10) {
+            dataToSend.dispatchTime = dataToSend.dispatchTime + ' 00:00:00'
+          }
+          createDispatch(dataToSend).then(() => {
             this.dialogFormVisible = false
-            this.total++
             this.$notify({
               title: '成功',
               message: '创建成功',
@@ -217,6 +215,9 @@ export default {
     },
     handleUpdate(row) {
       this.temp = Object.assign({}, row)
+      if (this.temp.dispatchTime) {
+        this.temp.dispatchTime = parseTime(this.temp.dispatchTime, '{y}-{m}-{d}')
+      }
       this.dialogStatus = 'update'
       this.dialogFormVisible = true
       this.$nextTick(() => {
@@ -226,10 +227,12 @@ export default {
     updateData() {
       this.$refs['dataForm'].validate((valid) => {
         if (valid) {
-          const tempData = Object.assign({}, this.temp)
+          const tempData = { ...this.temp }
+          if (tempData.dispatchTime && tempData.dispatchTime.length === 10) {
+            tempData.dispatchTime = tempData.dispatchTime + ' 00:00:00'
+          }
           updateDispatch(tempData).then(() => {
-            const index = this.list.findIndex(v => v.id === this.temp.id)
-            this.list.splice(index, 1, this.temp)
+            this.getList()
             this.dialogFormVisible = false
             this.$notify({
               title: '成功',
@@ -242,8 +245,8 @@ export default {
       })
     },
     handleDelete(row, index) {
-      this.$confirm('确认删除该条记录吗?', '警告', {
-        confirmButtonText: '确认',
+      this.$confirm('确认删除该条调度记录吗?', '警告', {
+        confirmButtonText: '确认删除',
         cancelButtonText: '取消',
         type: 'warning'
       }).then(async() => {
@@ -266,9 +269,9 @@ export default {
     handleDownload() {
       this.downloadLoading = true
       import('@/vendor/Export2Excel').then(excel => {
-        const tHeader = ['ID', '订单编号', '货物详情', '原货架号', '新货架号', '调度时间', '创建时间', '操作员']
-        const filterVal = ['id', 'orderNumber', 'cargoDetails', 'originalShelfNumber', 'newShelfNumber', 'dispatchTime', 'createTime', 'operator']
-        const data = this.formatJson(filterVal)
+        const tHeader = ['ID', '订单编号', '货物详情备注', '原货架编号', '调度后货架号', '调度日期', '新增日期', '修改日期', '操作员']
+        const filterVal = ['id', 'orderNumber', 'cargoDetails', 'originalShelfNumber', 'newShelfNumber', 'dispatchTime', 'createTime', 'updateTime', 'operator']
+        const data = this.formatJsonForExport(filterVal)
         excel.export_json_to_excel({
           header: tHeader,
           data,
@@ -277,10 +280,11 @@ export default {
         this.downloadLoading = false
       })
     },
-    formatJson(filterVal) {
-      return this.list.map(v => filterVal.map(j => {
-        if (j === 'dispatchTime' || j === 'createTime') {
-          return parseTime(v[j])
+    formatJsonForExport(filterVal) {
+      const listToFormat = this.list || []
+      return listToFormat.map(v => filterVal.map(j => {
+        if (['dispatchTime', 'createTime', 'updateTime'].includes(j)) {
+          return parseTime(v[j], '{y}-{m}-{d}')
         } else {
           return v[j]
         }
@@ -289,26 +293,9 @@ export default {
     sortChange(data) {
       const { prop, order } = data
       if (prop === 'id') {
-        this.sortByID(order)
-      } else if (prop === 'dispatchTime') {
-        this.sortByTime(order, 'dispatchTime')
-      } else if (prop === 'createTime') {
-        this.sortByTime(order, 'createTime')
-      }
-    },
-    sortByID(order) {
-      if (order === 'ascending') {
-        this.listQuery.sort = '+id'
-      } else {
-        this.listQuery.sort = '-id'
-      }
-      this.handleFilter()
-    },
-    sortByTime(order, field) {
-      if (order === 'ascending') {
-        this.listQuery.sort = `+${field}`
-      } else {
-        this.listQuery.sort = `-${field}`
+        this.listQuery.sort = (order === 'ascending' ? '+' : '-') + prop
+      } else if (['dispatchTime', 'createTime', 'updateTime'].includes(prop)) {
+        this.listQuery.sort = (order === 'ascending' ? '+' : '-') + prop
       }
       this.handleFilter()
     },

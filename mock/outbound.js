@@ -42,12 +42,10 @@ const buildingSuffixesForAddr = ['小区', '大厦', '广场', '中心', '花园
 function generateRealisticAddress() {
   const province = Random.pick(provincesForAddr);
   let cityOrDistrict = Random.pick(citiesByProvinceForAddr[province] || [province.replace('省', '市').replace('市', '') + '区']);
-
   const street = Random.pick(streetNamesForAddr);
   const streetNo = Random.integer(1, 200);
   const roadType = Random.pick(roadTypesForAddr);
   let addressDetail = `${province}${cityOrDistrict}${street}${roadType}${streetNo}号`.replace(/市辖区/g,'').replace(/undefined/g, '').trim();
-
   if (Math.random() > 0.5) {
     const buildingName = Random.cword(2, 3) + Random.pick(buildingSuffixesForAddr);
     addressDetail += ` ${buildingName}`;
@@ -55,48 +53,44 @@ function generateRealisticAddress() {
         addressDetail += ` ${Random.pick(['A', 'B', 'C'])}-${Random.integer(1,10)}`;
     }
   }
-  return addressDetail.substring(0, Random.integer(20, 35));
+  return addressDetail.substring(0, Random.integer(20, 30));
 }
 // --- End of Embedded Address Generation Logic ---
-
 
 const list = []
 const count = 80
 
 const cargoDetailsOptions = [
-    '电视机 (型号: @word(3)-@natural(40,65)寸)',
-    '洗衣机 (批次: @id)',
-    '办公椅 (SKU: CHR@natural(100,200))',
-    '进口红酒 (原产地: @country, 6瓶装)',
-    '专业教材 (@ctitle(4,7))',
-    '护肤礼盒 (@word(4,7)品牌)',
-    '儿童滑板车 (型号: SC@natural(10,30))',
-    '健身器材 (货号: FIT@natural(100,300))',
-    '办公文具套装',
-    '小家电 (多种混合)'
+    '电视机(@natural(32,55)")', '品牌服装(批:@string("A",2))', '家具(SKU:@id)',
+    '水果(@cword(2),@float(1,5)kg)', '书籍(@ctitle(3,4))', '护肤品套装',
+    '奶粉(婴幼儿)', '户外用品(OD@natural(10,99))'
 ];
-const shelfPrefixes = ['A', 'B', 'C', 'D', 'E', 'F', 'G']; // Expanded
-const customerNames = ['王芳', '李勇', '刘杰', '陈秀英', '张明', '赵丽', '孙悦', '周涛', '钱程', '吴刚'];
-const commonOperators = ['出库员01', '出库员02', '复核员甲', '系统自动', '老张'];
+const shelfPrefixes = ['A', 'B', 'C', 'D', 'E'];
+const customerNames = ['王芳', '李勇', '刘杰', '陈秀英', '张明', '赵丽', '孙悦', '周涛'];
+const commonOperators = ['拣货01', '拣货02', '复核A', '系统', '老王'];
 
 for (let i = 0; i < count; i++) {
   const id = count - i;
   const reverseIndexForTime = count - 1 - i;
-  const createTimestamp = generatePrimaryTimestamp(reverseIndexForTime, count);
-  const outboundTimestamp = generateFutureTimestamp(createTimestamp, 0, 1);
-  const updateTimestamp = generateFutureTimestamp(outboundTimestamp, 0, 2);
+  
+  // createTime is the primary "新增时间"
+  const recordCreateTime = generatePrimaryTimestamp(reverseIndexForTime, count); 
+  // outboundTime happens after record creation, before record update
+  const outboundActionTime = generateFutureTimestamp(recordCreateTime, 0, 1); // Outbound action happens 0-1 day after record creation
+  // updateTime is the "修改时间" for the record itself
+  const recordUpdateTime = generateFutureTimestamp(outboundActionTime, 0, 2); // Record updated 0-2 days after outbound action
 
   list.push(Mock.mock({
     id: id,
-    orderNumber: `OUT${Random.date('yyMM')}${Random.string('number', 4)}`, // Shorter: OUT25051234
+    orderNumber: `OT${Random.date('yyMM')}${Random.string('number', 3)}`,
     customerName: Random.pick(customerNames),
     phoneNumber: /^1[3-9]\d{9}$/,
     address: generateRealisticAddress(),
-    cargoDetails: Random.pick(cargoDetailsOptions).substring(0, Random.integer(20, 38)), // Cap cargo details length
-    shelfNumber: `${Random.pick(shelfPrefixes)}-${Random.integer(1, 10)}-${Random.string('number', 1).padStart(2,'0')}`, // Shorter shelf numbers
-    outboundTime: formatTimestamp(outboundTimestamp),
-    createTime: formatTimestamp(createTimestamp),
-    updateTime: formatTimestamp(updateTimestamp),
+    cargoDetails: Random.pick(cargoDetailsOptions).substring(0, Random.integer(15, 25)), // 货物详情备注
+    shelfNumber: `${Random.pick(shelfPrefixes)}-${Random.integer(1,5)}-${Random.string('number', 1).padStart(2,'0')}`, // 货架编号
+    outboundTime: formatTimestamp(outboundActionTime), // 出库时间
+    createTime: formatTimestamp(recordCreateTime),   // 新增时间
+    updateTime: formatTimestamp(recordUpdateTime),   // 修改时间
     operator: Random.pick(commonOperators)
   }))
 }
@@ -149,24 +143,25 @@ module.exports = [
       const now = Date.now();
       const maxId = list.length > 0 ? Math.max(...list.map(item => item.id)) : 0;
 
-      const createTimestamp = now;
-      const outboundTimestamp = data.outboundTime ? new Date(data.outboundTime).getTime() : generateFutureTimestamp(createTimestamp, 0, 0);
-      const updateTimestamp = outboundTimestamp;
+      const recordCreateTime = now; // 新增时间
+      const outboundActionTime = data.outboundTime ? new Date(data.outboundTime.startsWith('20') ? data.outboundTime : now).getTime() : recordCreateTime;
+      const recordUpdateTime = outboundActionTime;
 
       const newItem = {
         id: maxId + 1,
-        orderNumber: data.orderNumber || `OUT${Random.date('yyMM')}${Random.string('number', 4)}`,
+        orderNumber: data.orderNumber || `OT${Random.date('yyMM')}${Random.string('number', 3)}`,
         customerName: data.customerName || Random.pick(customerNames),
         phoneNumber: data.phoneNumber || `1${Random.string('number',10)}`,
         address: data.address || generateRealisticAddress(),
-        cargoDetails: (data.cargoDetails || Random.pick(cargoDetailsOptions)).substring(0,38),
-        shelfNumber: data.shelfNumber || `${Random.pick(shelfPrefixes)}-${Random.integer(1, 10)}-${Random.string('number', 1).padStart(2,'0')}`,
-        createTime: formatTimestamp(createTimestamp),
-        outboundTime: formatTimestamp(outboundTimestamp),
-        updateTime: formatTimestamp(updateTimestamp),
+        cargoDetails: (data.cargoDetails || Random.pick(cargoDetailsOptions)).substring(0,25),
+        shelfNumber: data.shelfNumber || `${Random.pick(shelfPrefixes)}-${Random.integer(1, 5)}-${Random.string('number', 1).padStart(2,'0')}`,
+        outboundTime: formatTimestamp(outboundActionTime),
+        createTime: formatTimestamp(recordCreateTime),
+        updateTime: formatTimestamp(recordUpdateTime),
         operator: data.operator || Random.pick(commonOperators)
       };
       list.unshift(newItem);
+      list.sort((a,b) => b.id - a.id);
       return { code: 20000, data: { item: newItem }, message: '创建成功' };
     }
   },
@@ -177,21 +172,23 @@ module.exports = [
       const data = config.body;
       const itemIndex = list.findIndex(r => r.id === data.id);
       if (itemIndex !== -1) {
-        const originalCreateTime = list[itemIndex].createTime;
+        const originalCreateTime = list[itemIndex].createTime; // Preserve original createTime
+        const originalOutboundTime = list[itemIndex].outboundTime;
+
         list[itemIndex] = { ...list[itemIndex], ...data };
         list[itemIndex].createTime = originalCreateTime;
-        if (data.outboundTime) {
-            list[itemIndex].outboundTime = formatTimestamp(new Date(data.outboundTime).getTime());
-        }
+        list[itemIndex].outboundTime = data.outboundTime ? formatTimestamp(new Date(data.outboundTime.startsWith('20') ? data.outboundTime : originalOutboundTime).getTime()) : originalOutboundTime;
+
         if(list[itemIndex].cargoDetails) {
-            list[itemIndex].cargoDetails = list[itemIndex].cargoDetails.substring(0,38);
+            list[itemIndex].cargoDetails = list[itemIndex].cargoDetails.substring(0,25);
         }
-        list[itemIndex].updateTime = formatTimestamp(Date.now());
+        list[itemIndex].updateTime = formatTimestamp(Date.now()); // Set updateTime to now
         return { code: 20000, data: 'success', message: '更新成功' };
       }
       return { code: 50000, message: '记录未找到' };
     }
   },
+  // ... delete and detail endpoints
   {
     url: '/outbound/delete',
     type: 'post',
@@ -205,7 +202,7 @@ module.exports = [
       return { code: 50000, message: '记录未找到' };
     }
   },
-  { // Added detail endpoint for consistency, though not explicitly requested to be used by view
+  {
     url: '/outbound/detail',
     type: 'get',
     response: config => {

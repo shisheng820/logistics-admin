@@ -26,62 +26,61 @@ function formatTimestamp(timestamp) {
 }
 // --- End of Time Generation Helpers ---
 
-// --- Address Generation Helpers ---
-const provinces = ['北京市', '上海市', '广东省', '江苏省', '浙江省', '四川省', '湖北省', '山东省', '福建省', '湖南省', '河南省', '河北省'];
-const citiesByProvince = {
-  '北京市': ['市辖区'], // Beijing districts are often just '区'
-  '上海市': ['市辖区'], // Shanghai districts
-  '广东省': ['广州市', '深圳市', '佛山市', '东莞市', '中山市', '珠海市', '江门市', '肇庆市', '惠州市'],
-  '江苏省': ['南京市', '苏州市', '无锡市', '常州市', '镇江市', '扬州市', '泰州市', '南通市', '盐城市', '淮安市', '徐州市', '连云港市', '宿迁市'],
-  '浙江省': ['杭州市', '宁波市', '温州市', '嘉兴市', '湖州市', '绍兴市', '金华市', '衢州市', '舟山市', '台州市', '丽水市'],
-  '四川省': ['成都市', '绵阳市', '德阳市', '南充市', '宜宾市', '乐山市', '泸州市', '达州市'],
-  '湖北省': ['武汉市', '宜昌市', '襄阳市', '荆州市', '黄石市', '十堰市', '孝感市', '荆门市'],
-  '山东省': ['济南市', '青岛市', '淄博市', '枣庄市', '东营市', '烟台市', '潍坊市', '济宁市', '泰安市', '威海市'],
-  '福建省': ['福州市', '厦门市', '泉州市', '漳州市', '莆田市', '三明市', '南平市', '龙岩市', '宁德市'],
-  '湖南省': ['长沙市', '株洲市', '湘潭市', '衡阳市', '邵阳市', '岳阳市', '常德市', '张家界市', '益阳市', '郴州市', '永州市', '怀化市', '娄底市'],
-  '河南省': ['郑州市', '洛阳市', '开封市', '平顶山市', '安阳市', '新乡市', '焦作市', '许昌市', '南阳市'],
-  '河北省': ['石家庄市', '唐山市', '秦皇岛市', '邯郸市', '邢台市', '保定市', '张家口市', '承德市', '沧州市', '廊坊市', '衡水市']
+// --- Embedded Address Generation Logic ---
+const provincesForAddr = ['北京市', '上海市', '广东省', '江苏省', '浙江省', '四川省', '湖北省', '山东省', '福建省', '湖南省', '河南省', '河北省', '陕西省', '辽宁省', '重庆市', '天津市']; // Common provinces
+const citiesByProvinceForAddr = {
+  '北京市': ['朝阳区', '海淀区', '东城区', '西城区'],
+  '上海市': ['浦东新区', '闵行区', '徐汇区', '黄浦区'],
+  '广东省': ['广州市', '深圳市', '佛山市', '东莞市'],
+  '江苏省': ['南京市', '苏州市', '无锡市', '常州市'],
+  '浙江省': ['杭州市', '宁波市', '温州市', '嘉兴市'],
+  // Add more simplified city/district lists for brevity in addresses if needed
 };
-const districtsByCity = { // Example, expand as needed
-  '广州市': ['天河区', '越秀区', '荔湾区', '海珠区', '白云区', '黄埔区', '番禺区', '花都区', '南沙区', '从化区', '增城区'],
-  '深圳市': ['福田区', '罗湖区', '南山区', '盐田区', '宝安区', '龙岗区', '龙华区', '坪山区', '光明区'],
-  '杭州市': ['上城区', '拱墅区', '西湖区', '滨江区', '萧山区', '余杭区', '临平区', '钱塘区', '富阳区', '临安区'],
-  '南京市': ['玄武区', '秦淮区', '建邺区', '鼓楼区', '浦口区', '栖霞区', '雨花台区', '江宁区', '六合区', '溧水区', '高淳区'],
-  '成都市': ['锦江区', '青羊区', '金牛区', '武侯区', '成华区', '龙泉驿区', '青白江区', '新都区', '温江区', '双流区', '郫都区'],
-  '武汉市': ['江岸区', '江汉区', '硚口区', '汉阳区', '武昌区', '青山区', '洪山区', '东西湖区', '汉南区', '蔡甸区', '江夏区', '黄陂区', '新洲区'],
-  '北京市市辖区': ['东城区', '西城区', '朝阳区', '丰台区', '石景山区', '海淀区', '门头沟区', '房山区', '通州区', '顺义区', '昌平区', '大兴区', '怀柔区', '平谷区', '密云区', '延庆区'],
-  '上海市市辖区': ['黄浦区', '徐汇区', '长宁区', '静安区', '普陀区', '虹口区', '杨浦区', '闵行区', '宝山区', '嘉定区', '浦东新区', '金山区', '松江区', '青浦区', '奉贤区', '崇明区']
-};
-
-const streetNames = ['人民路', '解放路', '中山路', '和平街', '建设大道', '科技园路', '创新路', '花园小区', '幸福里', '阳光大街', '世纪大道', '沿江路', '大学城路'];
-const streetSuffixes = ['号院', '大厦A座', '国际广场', '物流园C区', '工业园', '新村', '写字楼', '商务中心'];
+const streetNamesForAddr = ['人民路', '解放大道', '中山路', '和平街', '建设路', '科技路', '创新街', '花园路', '幸福里', '阳光道', '世纪大道'];
+const roadTypesForAddr = ['路', '街', '大道', '巷'];
+const buildingSuffixesForAddr = ['小区', '大厦', '广场', '中心', '花园', '工业园', '物流园', '仓库'];
 
 function generateRealisticAddress() {
-  const province = Random.pick(provinces);
-  const city = Random.pick(citiesByProvince[province] || [province.replace('省', '市')]); // Handle municipalities or default
-  let district = '';
-  if (districtsByCity[city]) {
-    district = Random.pick(districtsByCity[city]);
-  } else if (city.endsWith('市')) { // For cities not explicitly detailed, try adding a generic "区"
-    district = Random.pick(['城东区', '城西区', '高新区', '经济开发区', '市中心区']);
+  const province = Random.pick(provincesForAddr);
+  let cityOrDistrict = Random.pick(citiesByProvinceForAddr[province] || [province.replace('省', '市').replace('市', '') + '区']); // Simplified city/district
+
+  const street = Random.pick(streetNamesForAddr);
+  const streetNo = Random.integer(1, 200);
+  const roadType = Random.pick(roadTypesForAddr);
+
+  let addressDetail = `${province}${cityOrDistrict}${street}${roadType}${streetNo}号`;
+
+  if (Math.random() > 0.5) { // 50% chance to add a building/community
+    const buildingName = Random.cword(2, 3) + Random.pick(buildingSuffixesForAddr);
+    addressDetail += ` ${buildingName}`;
+    if (Math.random() > 0.5) {
+        addressDetail += ` ${Random.pick(['A', 'B', 'C'])}-${Random.integer(1,10)}`; // Simplified unit/room
+    }
   }
-
-  const street = Random.pick(streetNames);
-  const number = Random.integer(1, 500);
-  const suffix = Random.pick(['号', '弄', '巷']);
-  const building = Random.pick(['', `${Random.pick(streetSuffixes)} ${Random.integer(1,20)}层${Random.integer(101,1000)}室`, `${Random.pick(streetSuffixes)}`]);
-
-  return `${province}${city}${district}${street}${number}${suffix} ${building}`.trim();
+  // Cap length for addresses
+  return addressDetail.substring(0, Random.integer(20, 35));
 }
-// --- End of Address Generation Helpers ---
+// --- End of Embedded Address Generation Logic ---
+
 
 const list = []
 const count = 100
 
-const cargoDetailsOptions = ['电子产品 (SKU: @word(8))', '服装 (批号: @id)', '家居用品 (型号: @word(3)-@natural(100,999))', '生鲜食品 (保质期至: @date("yyyy-MM-dd"))', '图书音像 (ISBN: @id)', '美妆护肤 (品牌: @word(5))', '母婴用品 (适用年龄: @natural(0,3)岁)', '运动户外 (货号: @natural(1000,9999))'];
-const shelfPrefixes = ['A', 'B', 'C', 'D'];
-const customerNames = ['张伟', '李娜', '王强', '刘敏', '陈晨', '赵静', '吴雷', '周芳'];
-const commonOperators = ['admin_op', '库管员01', '库管员02', '系统录入'];
+const cargoDetailsOptions = [
+    '电子配件 (批号: @string("upper",2)@natural(100,999))',
+    '服装 (款号: @word(1)-@natural(10,99))',
+    '家居小件 (SKU: @id)',
+    '生鲜 (@cword(2), @float(1,10)kg)',
+    '图书 (@ctitle(3,5))',
+    '化妆品 (@word(3,6)系列)',
+    '母婴玩具 (型号: T-@natural(10,50))',
+    '户外装备 (货号: OD@natural(100,500))',
+    '文具用品 (1箱)',
+    '日用杂货 (多种)'
+];
+const shelfPrefixes = ['A', 'B', 'C', 'D', 'E', 'F'];
+const customerNames = ['张伟', '李娜', '王强', '刘敏', '陈晨', '赵静', '吴雷', '周芳', '孙平', '杨林'];
+const commonOperators = ['admin', '库管01', '库管02', '系统', '小李', '老王'];
 
 
 for (let i = 0; i < count; i++) {
@@ -93,12 +92,12 @@ for (let i = 0; i < count; i++) {
 
   list.push(Mock.mock({
     id: id,
-    orderNumber: `IN${Random.date('yyyyMMdd')}${Random.string('number', 4)}`,
+    orderNumber: `IN${Random.date('yyMM')}${Random.string('number', 4)}`, // MODIFIED: Shorter order number e.g., IN25051234
     customerName: Random.pick(customerNames),
-    phoneNumber: /^1[3456789]\d{9}$/,
+    phoneNumber: /^1[3-9]\d{9}$/,
     address: generateRealisticAddress(),
-    cargoDetails: Random.pick(cargoDetailsOptions),
-    shelfNumber: `${Random.pick(shelfPrefixes)}-${Random.integer(1, 5)}-${Random.string('number', 2)}`,
+    cargoDetails: Random.pick(cargoDetailsOptions).substring(0, Random.integer(20, 35)), // Cap cargo details length
+    shelfNumber: `${Random.pick(shelfPrefixes)}-${Random.integer(1, 8)}-${Random.string('number', 1).padStart(2,'0')}`,
     inboundTime: formatTimestamp(inboundTimestamp),
     createTime: formatTimestamp(createTimestamp),
     updateTime: formatTimestamp(updateTimestamp),
@@ -113,9 +112,9 @@ module.exports = [
     response: config => {
       const { orderNumber, customerName, shelfNumber, page = 1, limit = 20, sort } = config.query
       let mockList = list.filter(item => {
-        if (orderNumber && !item.orderNumber.includes(orderNumber)) return false
-        if (customerName && !item.customerName.includes(customerName)) return false
-        if (shelfNumber && !item.shelfNumber.includes(shelfNumber)) return false
+        if (orderNumber && !item.orderNumber.toLowerCase().includes(orderNumber.toLowerCase())) return false
+        if (customerName && !item.customerName.toLowerCase().includes(customerName.toLowerCase())) return false
+        if (shelfNumber && !item.shelfNumber.toLowerCase().includes(shelfNumber.toLowerCase())) return false
         return true
       })
 
@@ -160,12 +159,12 @@ module.exports = [
 
       const newItem = {
         id: maxId + 1,
-        orderNumber: data.orderNumber || `IN${Random.date('yyyyMMdd')}${Random.string('number', 4)}`,
+        orderNumber: data.orderNumber || `IN${Random.date('yyMM')}${Random.string('number', 4)}`, // Use shorter format
         customerName: data.customerName || Random.pick(customerNames),
         phoneNumber: data.phoneNumber || `1${Random.string('number', 10)}`,
         address: data.address || generateRealisticAddress(),
-        cargoDetails: data.cargoDetails || Random.pick(cargoDetailsOptions),
-        shelfNumber: data.shelfNumber || `${Random.pick(shelfPrefixes)}-${Random.integer(1, 5)}-${Random.string('number', 2)}`,
+        cargoDetails: (data.cargoDetails || Random.pick(cargoDetailsOptions)).substring(0, 35),
+        shelfNumber: data.shelfNumber || `${Random.pick(shelfPrefixes)}-${Random.integer(1, 8)}-${Random.string('number', 1).padStart(2,'0')}`,
         createTime: formatTimestamp(createTimestamp),
         inboundTime: formatTimestamp(inboundTimestamp),
         updateTime: formatTimestamp(updateTimestamp),
@@ -187,6 +186,9 @@ module.exports = [
         list[itemIndex].createTime = originalCreateTime;
         if (data.inboundTime) {
             list[itemIndex].inboundTime = formatTimestamp(new Date(data.inboundTime).getTime());
+        }
+        if(list[itemIndex].cargoDetails) {
+            list[itemIndex].cargoDetails = list[itemIndex].cargoDetails.substring(0,35);
         }
         list[itemIndex].updateTime = formatTimestamp(Date.now());
         return { code: 20000, data: 'success', message: '更新成功' };

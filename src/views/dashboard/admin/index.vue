@@ -74,12 +74,12 @@ export default {
           path: '/tracking/list',
           color: '#34bfa3'
         },
-        {
-          title: '数据分析', // This is the parent route for charts
-          icon: 'chart', // From the parent /charts route meta
-          path: '/charts/line', // Point to the first chart, or a general charts overview if you have one
-          color: '#FFB549' // Example Color
-        },
+        // {
+        //   title: '数据分析', // This is the parent route for charts
+        //   icon: 'chart', // From the parent /charts route meta
+        //   path: '/charts/line', // Point to the first chart, or a general charts overview if you have one
+        //   color: '#FFB549' // Example Color
+        // },
         // {
         //   title: '系统管理', // Parent route for system management
         //   icon: 'el-icon-s-tools',
@@ -88,15 +88,21 @@ export default {
         // },
         // // You could also add individual system management sub-modules if preferred:
         {
-          title: '用户管理',
-          icon: 'el-icon-user',
-          path: '/system/user',
+          title: '入库统计',
+          icon: 'el-icon-pie-chart',
+          path: '/inbound-monthly-orders/index',
+          color: '#E6A23C'
+        },
+        {
+          title: '出库统计',
+          icon: 'el-icon-s-data',
+          path: '/outbound-domestic-monthly-orders/index',
           color: '#E6A23C'
         },
         {
           title: '日志管理',
           icon: 'el-icon-notebook-2',
-          path: '/system/log',
+          path: '/log/list',
           color: '#909399'
         }
       ]

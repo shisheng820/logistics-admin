@@ -1,17 +1,35 @@
 <template>
-  <div class="chart-page-container">
-    <div ref="chart" :class="className" :style="{height:height,width:width}" />
-  </div>
+  <div :class="className" :style="{height:height,width:width}" />
 </template>
 
 <script>
 import echarts from 'echarts'
-require('echarts/theme/macarons')
-import resize from '@/views/dashboard/admin/components/mixins/resize.js' // Corrected path
-import { getCustomerMonthlyCountStats } from '@/api/dataAnalysis' // Swapped API call as per last routing change
+require('echarts/theme/macarons') // echarts theme
+import resize from './mixins/resize'
+// Removed API import: import { getMonthlyDomesticOutboundOrders } from '@/api/dataAnalysis'
+
+// Helper to generate last 24 months labels (YYYY-MM)
+function getLast24MonthsLabels() {
+  const months = []
+  const today = new Date()
+  for (let i = 23; i >= 0; i--) {
+    const d = new Date(today.getFullYear(), today.getMonth() - i, 1)
+    months.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`)
+  }
+  return months
+}
+
+const hardcodedOutboundData = {
+  months: getLast24MonthsLabels(),
+  // Example hardcoded counts for 24 months. Replace with your desired static values.
+  counts: [
+    120, 130, 140, 150, 135, 160, 170, 155, 165, 180, 190, 175, // Last year
+    130, 140, 155, 160, 145, 170, 180, 165, 175, 190, 200, 185 // Current year up to current month (approx)
+  ]
+}
 
 export default {
-  name: 'CustomerMonthlyPercentageChart', // Updated to reflect content
+  name: 'OutboundDomesticMonthlyChart',
   mixins: [resize],
   props: {
     className: {
@@ -24,124 +42,117 @@ export default {
     },
     height: {
       type: String,
-      default: 'calc(100vh - 84px - 40px)'
+      default: '350px'
+    },
+    autoResize: {
+      type: Boolean,
+      default: true
     }
   },
   data() {
     return {
-      chart: null
+      chart: null,
+      chartData: hardcodedOutboundData // Use hardcoded data
     }
   },
   mounted() {
-    this.initChart().then(() => {
-      if (this.chart && typeof this.initListener === 'function') {
-        this.initListener()
-      }
+    this.$nextTick(() => {
+      this.initChart()
     })
   },
   beforeDestroy() {
-    if (this.chart) {
-      this.chart.dispose()
-      this.chart = null
+    if (!this.chart) {
+      return
     }
+    this.chart.dispose()
+    this.chart = null
   },
   methods: {
-    async initChart() {
-      this.chart = echarts.init(this.$refs.chart, 'macarons')
-      this.chart.showLoading()
-
-      try {
-        const response = await getCustomerMonthlyCountStats() // API for customer counts
-        const rawData = response.data
-
-        if (!rawData || !Array.isArray(rawData) || rawData.length === 0) {
-          this.chart.hideLoading()
-          this.chart.setOption({ title: { text: '近2年每月客户人数占比 (2023-2024)', subtext: '暂无数据', left: 'center' }}) // Updated title
-          return
+    // fetchData method is removed
+    initChart() {
+      this.chart = echarts.init(this.$el, 'macarons')
+      this.setOptions(this.chartData)
+    },
+    setOptions({ months, counts } = {}) {
+      if (!this.chart || !months || !counts || months.length === 0 || counts.length === 0) {
+        if (this.chart) {
+          this.chart.clear()
+          this.chart.setOption({
+            title: { text: '近2年境内每月出库订单数', subtext: '无数据显示', left: 'center' },
+            xAxis: { data: [] },
+            yAxis: {},
+            series: [{ type: 'line', data: [] }]
+          })
         }
-
-        const yearlyData = {}
-        const targetYears = ['2023', '2024']
-
-        targetYears.forEach(year => {
-          yearlyData[year] = { total: 0, counts: Array(12).fill(0), originalCounts: Array(12).fill(0) }
-        })
-
-        rawData.forEach(item => {
-          const year = item.month.substring(0, 4)
-          const month = item.month.substring(5, 7)
-          if (yearlyData[year]) {
-            yearlyData[year].counts[parseInt(month, 10) - 1] = item.customerCount
-            yearlyData[year].originalCounts[parseInt(month, 10) - 1] = item.customerCount
-            yearlyData[year].total += item.customerCount
+        return
+      }
+      this.chart.setOption({
+        title: {
+          text: '近2年境内每月出库订单数',
+          left: 'center'
+        },
+        xAxis: {
+          data: months,
+          boundaryGap: true, // Keep true for line chart if you prefer start/end not on edge
+          axisTick: {
+            show: false
           }
-        })
-
-        const seriesData = []
-        const legendData = []
-        const xAxisData = Array.from({ length: 12 }, (_, i) => `${i + 1}月`)
-
-        targetYears.forEach(year => {
-          if (yearlyData[year] && yearlyData[year].total > 0) {
-            legendData.push(`${year}年客户占比`)
-            const percentages = yearlyData[year].counts.map(count =>
-              parseFloat(((count / yearlyData[year].total) * 100).toFixed(2))
-            )
-            seriesData.push({
-              name: `${year}年客户占比`,
-              type: 'bar', // Changed to bar for customer count
-              barMaxWidth: 40,
-              label: { show: true, position: 'top', formatter: '{c}%', fontSize: 10 },
-              emphasis: { focus: 'series' },
-              data: percentages
-            })
+        },
+        grid: {
+          left: 10,
+          right: 30,
+          bottom: 20,
+          top: 50, // Increased top margin
+          containLabel: true
+        },
+        tooltip: {
+          trigger: 'axis',
+          axisPointer: {
+            type: 'cross'
+          },
+          padding: [5, 10]
+        },
+        yAxis: {
+          name: '订单数',
+          type: 'value',
+          axisTick: {
+            show: false
           }
-        })
-
-        this.chart.hideLoading()
-        this.chart.setOption({
-          title: { text: '近2年每月客户人数占比 (2023-2024)', left: 'center', textStyle: { fontSize: 16, fontWeight: 'bold' }}, // Updated title
-          tooltip: {
-            trigger: 'axis',
-            axisPointer: { type: 'shadow' },
-            formatter: function(params) {
-              let tooltip = params[0].name + '<br/>'
-              params.forEach(item => {
-                const year = item.seriesName.substring(0, 4)
-                const monthIndex = parseInt(item.name.replace('月', ''), 10) - 1
-                const originalCount = yearlyData[year] ? yearlyData[year].originalCounts[monthIndex] : 0
-                tooltip += `${item.marker}${item.seriesName}: ${item.value}% (${originalCount}人)<br/>`
-              })
-              return tooltip
+        },
+        legend: {
+          data: ['境内出库订单数'],
+          left: 'right',
+          top: '10px'
+        },
+        series: [{
+          name: '境内出库订单数',
+          smooth: true,
+          type: 'line',
+          itemStyle: {
+            normal: {
+              color: '#FF005A',
+              lineStyle: {
+                color: '#FF005A',
+                width: 2
+              },
+              // Optional: area style for line chart
+              areaStyle: {
+                color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{
+                  offset: 0,
+                  color: 'rgba(255, 0, 90, 0.3)'
+                }, {
+                  offset: 1,
+                  color: 'rgba(255, 0, 90, 0)'
+                }])
+              }
             }
           },
-          legend: { data: legendData, bottom: 5, type: 'scroll' },
-          grid: { left: '3%', right: '4%', bottom: '12%', containLabel: true },
-          xAxis: [{ type: 'category', data: xAxisData, axisTick: { alignWithLabel: true }, axisLabel: { interval: 0, rotate: 30 }}],
-          yAxis: [{ type: 'value', name: '占比 (%)', axisLabel: { formatter: '{value}%' }, max: 100, min: 0 }],
-          series: seriesData,
-          dataZoom: [{ type: 'slider', start: 0, end: 100, xAxisIndex: 0, bottom: 40 }]
-        })
-      } catch (error) {
-        this.chart.hideLoading()
-        console.error('获取客户占比数据失败:', error) // Updated error message
-        this.chart.setOption({ title: { text: '近2年每月客户人数占比 (2023-2024)', subtext: '数据加载失败', left: 'center' }}) // Updated title
-      }
+          data: counts,
+          animationDuration: 2800,
+          animationEasing: 'quadraticOut'
+        }]
+      })
     }
   }
 }
 </script>
-
-<style scoped>
-.chart-page-container {
-  padding: 20px;
-  width: 100%;
-  height: calc(100vh - 84px - 40px); /* 示例高度，请根据实际布局调整 */
-  box-sizing: border-box;
-  background-color: #fff;
-}
-.chart {
-  width: 100%;
-  height: 100%;
-}
-</style>

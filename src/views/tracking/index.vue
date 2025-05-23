@@ -1,17 +1,14 @@
 <template>
   <div class="app-container">
     <div class="filter-container">
-      <!-- <el-input v-model="listQuery.orderNumber" placeholder="订单编号" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
-      <el-input v-model="listQuery.currentLocation" placeholder="当前位置" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
-      <el-button v-waves class="filter-item" type="primary" icon="el-icon-search" @click="handleFilter">
+      <!-- <el-input v-model="listQuery.orderNumber" placeholder="订单编号" style="width: 130px;" class="filter-item" @keyup.enter.native="handleFilter" />
+      <el-input v-model="listQuery.currentLocation" placeholder="当前位置" style="width: 150px;" class="filter-item" @keyup.enter.native="handleFilter" />
+      <el-button v-waves class="filter-item" type="primary" icon="el-icon-search" @click="handleFilter" style="margin-left: 10px;">
         搜索
       </el-button> -->
       <el-button class="filter-item" style="margin-left: 10px;" type="primary" icon="el-icon-edit" @click="handleCreate">
-        新增追踪
+        新增
       </el-button>
-      <!-- <el-button v-waves :loading="downloadLoading" class="filter-item" type="primary" icon="el-icon-download" @click="handleDownload">
-        导出
-      </el-button> -->
     </div>
 
     <el-table
@@ -24,52 +21,52 @@
       style="width: 100%;"
       @sort-change="sortChange"
     >
-      <el-table-column label="ID" prop="id" sortable="custom" align="center" width="80" :class-name="getSortClass('id')">
+      <el-table-column label="ID" prop="id" sortable="custom" align="center" width="60" :class-name="getSortClass('id')">
         <template slot-scope="{row}">
           <span>{{ row.id }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="订单编号" prop="orderNumber" width="180px" align="center">
+      <el-table-column label="订单编号" prop="orderNumber" width="120px" align="center">
         <template slot-scope="{row}">
           <span>{{ row.orderNumber }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="上一站" prop="previousLocation" min-width="150px">
+      <el-table-column label="上一站" prop="previousLocation" min-width="140px" :show-overflow-tooltip="true">
         <template slot-scope="{row}">
           <span>{{ row.previousLocation }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="当前位置" prop="currentLocation" min-width="150px">
+      <el-table-column label="当前位置" prop="currentLocation" min-width="140px" :show-overflow-tooltip="true">
         <template slot-scope="{row}">
           <span>{{ row.currentLocation }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="联系人" prop="currentLocationContactPerson" width="120px" align="center">
+      <el-table-column label="联系人" prop="currentLocationContactPerson" width="80px" align="center">
         <template slot-scope="{row}">
           <span>{{ row.currentLocationContactPerson }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="联系电话" prop="currentLocationContactPhone" width="120px" align="center">
+      <el-table-column label="联系电话" prop="currentLocationContactPhone" width="110px" align="center">
         <template slot-scope="{row}">
           <span>{{ row.currentLocationContactPhone }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="备注/状态" prop="remarks" min-width="150px">
+      <el-table-column label="备注/状态" prop="remarks" min-width="130px" :show-overflow-tooltip="true">
         <template slot-scope="{row}">
           <span>{{ row.remarks }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="更新时间" prop="updateTime" sortable="custom" width="160px" align="center" :class-name="getSortClass('updateTime')">
+      <el-table-column label="更新日期" prop="updateTime" sortable="custom" width="110px" align="center" :class-name="getSortClass('updateTime')">
         <template slot-scope="{row}">
-          <span>{{ row.updateTime | parseTime('{y}-{m}-{d} {h}:{i}') }}</span>
+          <span>{{ row.updateTime | parseTime('{y}-{m}-{d}') }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="操作员" prop="operator" width="110px" align="center">
+      <el-table-column label="操作员" prop="operator" width="90px" align="center">
         <template slot-scope="{row}">
           <span>{{ row.operator }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="center" width="230" class-name="small-padding fixed-width">
+      <el-table-column label="操作" align="center" width="150" class-name="small-padding fixed-width">
         <template slot-scope="{row,$index}">
           <el-button type="primary" size="mini" @click="handleUpdate(row)">
             编辑
@@ -84,7 +81,7 @@
     <pagination v-show="total>0" :total="total" :page.sync="listQuery.page" :limit.sync="listQuery.limit" @pagination="getList" />
 
     <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible">
-      <el-form ref="dataForm" :rules="rules" :model="temp" label-position="left" label-width="100px" style="width: 400px; margin-left:50px;">
+      <el-form ref="dataForm" :rules="rules" :model="temp" label-position="left" label-width="100px" style="width: 450px; margin-left:50px;">
         <el-form-item label="订单编号" prop="orderNumber">
           <el-input v-model="temp.orderNumber" />
         </el-form-item>
@@ -101,7 +98,7 @@
           <el-input v-model="temp.currentLocationContactPhone" />
         </el-form-item>
         <el-form-item label="备注/状态" prop="remarks">
-          <el-input v-model="temp.remarks" type="textarea" :rows="3" />
+          <el-input v-model="temp.remarks" type="textarea" :rows="2" />
         </el-form-item>
         <el-form-item label="操作员" prop="operator">
           <el-input v-model="temp.operator" />
@@ -123,7 +120,7 @@
 import { fetchTrackingList, createTracking, updateTracking, deleteTracking } from '@/api/tracking'
 import waves from '@/directive/waves' // waves directive
 import { parseTime } from '@/utils'
-import Pagination from '@/components/Pagination' // secondary package based on el-pagination
+import Pagination from '@/components/Pagination'
 
 export default {
   name: 'TrackingTable',
@@ -140,7 +137,7 @@ export default {
         limit: 20,
         orderNumber: undefined,
         currentLocation: undefined,
-        sort: '-id' // Default sort by ID descending
+        sort: '-id'
       },
       temp: {
         id: undefined,
@@ -150,8 +147,9 @@ export default {
         currentLocationContactPerson: '',
         currentLocationContactPhone: '',
         remarks: '',
-        operator: ''
-        // updateTime and createTime will be handled by backend or mock
+        operator: '',
+        createTime: undefined,
+        updateTime: undefined
       },
       dialogFormVisible: false,
       dialogStatus: '',
@@ -192,7 +190,7 @@ export default {
         currentLocationContactPerson: '',
         currentLocationContactPhone: '',
         remarks: '',
-        operator: ''
+        operator: this.$store.getters.name || ''
       }
     },
     handleCreate() {
@@ -243,7 +241,6 @@ export default {
               type: 'success',
               duration: 2000
             })
-            this.getList()
           })
         }
       })
@@ -273,9 +270,10 @@ export default {
     handleDownload() {
       this.downloadLoading = true
       import('@/vendor/Export2Excel').then(excel => {
-        const tHeader = ['ID', '订单编号', '上一站', '当前位置', '联系人', '联系电话', '备注/状态', '更新时间', '操作员']
-        const filterVal = ['id', 'orderNumber', 'previousLocation', 'currentLocation', 'currentLocationContactPerson', 'currentLocationContactPhone', 'remarks', 'updateTime', 'operator']
-        const data = this.formatJson(filterVal)
+        const tHeader = ['ID', '订单编号', '上一站', '当前位置', '联系人', '联系电话', '备注/状态', '订单创建时间', '状态更新日期', '操作员']
+        const filterVal = ['id', 'orderNumber', 'previousLocation', 'currentLocation', 'currentLocationContactPerson', 'currentLocationContactPhone', 'remarks', 'createTime', 'updateTime', 'operator']
+        const list = this.list
+        const data = this.formatJson(filterVal, list)
         excel.export_json_to_excel({
           header: tHeader,
           data,
@@ -284,10 +282,12 @@ export default {
         this.downloadLoading = false
       })
     },
-    formatJson(filterVal) {
-      return this.list.map(v => filterVal.map(j => {
-        if (j === 'updateTime') {
-          return parseTime(v[j])
+    formatJson(filterVal, jsonData) {
+      return jsonData.map(v => filterVal.map(j => {
+        if (j === 'createTime') {
+          return parseTime(v[j], '{y}-{m}-{d} {h}:{i}')
+        } else if (j === 'updateTime') {
+          return parseTime(v[j], '{y}-{m}-{d}')
         } else {
           return v[j]
         }
@@ -297,8 +297,8 @@ export default {
       const { prop, order } = data
       if (prop === 'id') {
         this.sortByID(order)
-      } else if (prop === 'updateTime') {
-        this.sortByTime(order, 'updateTime')
+      } else if (prop === 'updateTime' || prop === 'createTime') {
+        this.sortByTime(order, prop)
       }
     },
     sortByID(order) {

@@ -12,13 +12,11 @@ export const constantRoutes = [
     component: () => import('@/views/login/index'),
     hidden: true
   },
-
   {
     path: '/404',
     component: () => import('@/views/error-page/404'),
     hidden: true
   },
-
   {
     path: '/',
     component: Layout,
@@ -30,7 +28,6 @@ export const constantRoutes = [
       meta: { title: '首页看板', icon: 'dashboard' }
     }]
   },
-
   {
     path: '/profile',
     component: Layout,
@@ -48,6 +45,7 @@ export const constantRoutes = [
 ]
 
 export const asyncRoutes = [
+  // ... other module routes (inbound, outbound, etc.) remain the same ...
   {
     path: '/inbound',
     component: Layout,
@@ -63,7 +61,6 @@ export const asyncRoutes = [
       }
     ]
   },
-
   {
     path: '/outbound',
     component: Layout,
@@ -79,7 +76,6 @@ export const asyncRoutes = [
       }
     ]
   },
-
   {
     path: '/dispatch',
     component: Layout,
@@ -95,7 +91,6 @@ export const asyncRoutes = [
       }
     ]
   },
-
   {
     path: '/supplychain',
     component: Layout,
@@ -111,7 +106,6 @@ export const asyncRoutes = [
       }
     ]
   },
-
   {
     path: '/tracking',
     component: Layout,
@@ -128,42 +122,72 @@ export const asyncRoutes = [
     ]
   },
 
+  // 入库统计独立路由
+  {
+    path: '/inbound-monthly-orders',
+    component: Layout,
+    redirect: '/inbound-monthly-orders/index',
+    name: 'InboundMonthlyOrdersRoot',
+    meta: {
+      title: '月度入库订单统计',
+      icon: 'el-icon-pie-chart',
+      alwaysShow: true
+    },
+    children: [{
+      path: 'index',
+      component: () => import('@/views/charts/baifen'),
+      name: 'InboundMonthlyOrdersChart',
+      meta: { title: '月度入库订单统计', noCache: true }
+    }]
+  },
+  // 出库统计独立路由
+  {
+    path: '/outbound-domestic-monthly-orders',
+    component: Layout,
+    redirect: '/outbound-domestic-monthly-orders/index',
+    name: 'OutboundDomesticMonthlyOrdersRoot',
+    meta: {
+      title: '月度境内出库订单统计',
+      icon: 'el-icon-s-data',
+      alwaysShow: true
+    },
+    children: [{
+      path: 'index',
+      component: () => import('@/views/charts/line'),
+      name: 'OutboundDomesticMonthlyOrdersChart',
+      meta: { title: '月度境内出库订单统计', noCache: true }
+    }]
+  },
   // Promoted User Management to a top-level route
-  {
-    path: '/user-management', // New parent path, ensure it's unique
-    component: Layout,
-    redirect: '/user-management/list', // Point to its child
-    name: 'UserManagementRoot', // New unique name for the parent route
-    meta: { title: '用户管理', icon: 'el-icon-user' }, // Meta from original child
-    children: [
-      {
-        path: 'list', // Original child path, can be 'index' or kept as 'user'
-        name: 'UserManagement', // Original name
-        component: () => import('@/views/system/user/index'),
-        // meta title can be removed if parent title is sufficient, or kept for breadcrumb
-        meta: { title: '用户列表' } // Or keep original '用户管理' if you prefer submenu to repeat parent
-      }
-    ]
-  },
-
+  // {
+  //   path: '/user-management',
+  //   component: Layout,
+  //   redirect: '/user-management/list',
+  //   name: 'UserManagementRoot',
+  //   meta: { title: '用户管理', icon: 'el-icon-user' },
+  //   children: [
+  //     {
+  //       path: 'list',
+  //       name: 'UserManagement',
+  //       component: () => import('@/views/system/user/index'),
+  //       meta: { title: '用户列表' }
+  //     }
+  //   ]
+  // },
   // Promoted Log Management to a top-level route
+  // 日志管理 - 图标已更新
   {
-    path: '/log-management', // New parent path, ensure it's unique
+    path: '/log',
     component: Layout,
-    redirect: '/log-management/list', // Point to its child
-    name: 'LogManagementRoot', // New unique name for the parent route
-    meta: { title: '日志管理', icon: 'el-icon-notebook-2' }, // Meta from original child
     children: [
       {
-        path: 'list', // Original child path, can be 'index' or kept as 'log'
-        name: 'LogManagement', // Original name
-        component: () => import('@/views/system/log/index'),
-        // meta title can be removed if parent title is sufficient, or kept for breadcrumb
-        meta: { title: '日志列表' } // Or keep original '日志管理'
+        path: 'list',
+        component: () => import('@/views/log/index'),
+        name: 'LogManagement',
+        meta: { title: '日志管理', icon: 'el-icon-notebook-2' } // <--- 修改图标为 'clipboard' (SVG图标)
       }
     ]
   },
-
   // 404 page must be placed at the end
   { path: '*', redirect: '/404', hidden: true }
 ]

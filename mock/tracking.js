@@ -1,8 +1,5 @@
 const Mock = require('mockjs')
 const { Random } = Mock
-// Assuming you have mock/address.js for generateRealisticAddress, if not, embed its definition or remove the import.
-// For tracking locations, we'll use a more specific generator below, so generateRealisticAddress might not be needed here.
-// const { generateRealisticAddress } = require('./address');
 
 // --- Time Generation Helpers ---
 const START_DATE_STR = '2024-01-01T00:00:00.000Z';
@@ -17,7 +14,7 @@ function generatePrimaryTimestamp(reverseIndex, totalCount) {
   return startDate + timePortion * TIME_RANGE;
 }
 
-function generateFutureTimestamp(baseTime, minHoursOffset, maxHoursOffset) { // Changed to hours for tracking
+function generateFutureTimestamp(baseTime, minHoursOffset, maxHoursOffset) {
   const hoursInMs = Random.integer(minHoursOffset, maxHoursOffset) * 60 * 60 * 1000;
   const randomOffsetInHour = Random.integer(0, 59 * 60 * 1000 + 59 * 1000);
   let futureTime = baseTime + hoursInMs + randomOffsetInHour;
@@ -30,20 +27,27 @@ function formatTimestamp(timestamp) {
 // --- End of Time Generation Helpers ---
 
 // --- Enhanced Location Generation for Tracking ---
-const provincesShortForTracking = ['京', '沪', '粤', '苏', '浙', '川', '鄂', '鲁', '闽', '湘', '豫', '冀', '陕', '辽', '渝', '津', '皖', '赣', '晋', '桂', '云', '贵', '甘', '琼', '蒙', '黑', '吉', '宁', '青', '藏', '新'];
-const cityIdentifiersForTracking = ['中心', '东站', '西苑', '南货场', '北库', '国际港', '保税区', '航空部', '铁运部', '枢纽'];
-const locationTypesForTracking = ['分拣中心', '中转仓', '派送站', '航空枢纽', '铁路货运站', '口岸操作区', '集散场地', '区域处理中心'];
-const specificLocationDetails = ['1号站台', 'A区', 'B7岗', '出口查验区', '进口暂存区', '快件处理部'];
+const provincesShortForTracking = ['京', '沪', '粤', '苏', '浙', '川', '鄂', '鲁', '闽', '湘', '豫', '冀', '陕', '辽', '渝', '津', '皖', '赣', '晋'];
+const cityHubIdentifiers = ['中心', '总站', '一区', '二区', '东部', '西部', '南部', '北部', '国际中转']; // Can be city names too
+const locationTypesForTracking = ['分拨', '中转仓', '派送站', '航空部', '铁运站', '口岸仓', '集散点', '处理中心', '枢纽']; // Shorter types
+const specificLocationDetails = ['1号口', 'A区', 'B7台', '出口', '进口区', '快件部', '大货区', '冷链区'];
 
 function generateTrackingPointName() {
   const provinceInitial = Random.pick(provincesShortForTracking);
-  const cityId = Random.pick(cityIdentifiersForTracking);
+  let cityPart = Random.cword(1,2); // e.g., 广州, 浦东, 武汉
   const locType = Random.pick(locationTypesForTracking);
-  let detail = '';
-  if (Math.random() < 0.4) { // 40% chance to add more specific detail
-    detail = ` (${Random.pick(specificLocationDetails)})`;
+  let detailPart = '';
+
+  // More concise combination
+  let locationName = `${provinceInitial}${cityPart}${locType}`;
+
+  if (Math.random() < 0.4) { // 40% chance to add specific detail
+    detailPart = `(${Random.pick(specificLocationDetails)})`;
+    locationName = `${locationName}${detailPart}`;
   }
-  return `${provinceInitial}${cityId}${locType}${detail}`;
+
+  // Cap length to keep it reasonably short but descriptive
+  return locationName.substring(0, Random.integer(8, 18)); // e.g., "粤广州分拨(A区)" or "沪浦东中转仓"
 }
 // --- End of Location Generation for Tracking ---
 
@@ -51,51 +55,44 @@ function generateTrackingPointName() {
 const list = []
 const count = 70
 
-const trackingRemarks = [
-  '货物已到达 [{location}], 等待扫描入库。',
-  '正在进行自动化分拣作业。',
-  '因系统维护，预计中转延迟 {delayHours} 小时。',
-  '预计 {timePeriod} 发往下一站 [{next_location}]。',
-  '已完成出库前复核。',
-  '正在装载至 {vehicleType}，准备发运。',
-  '已从 [{location}] 发出，前往 [{next_location}]。',
-  '异常：运单信息与实物不符，待人工处理。',
-  '物流信息已同步至TMS系统。',
-  '运输途中，GPS定位正常。',
-  '抵达 [{location}]，正在卸货。'
+// Shorter remarks
+const trackingRemarksShort = [
+  '已达[{loc}]', '分拣中', '运输延迟', '预计{time}发', '已复核',
+  '装载({veh})', '发往[{nextLoc}]', '异常待查', '信息同步', '运输正常',
+  '卸货@[{loc}]', '清关中', '安检通过', '派送中', '客户改派', '尝试派送', '快件入柜'
 ];
-const vehicleTypes = ['干线货车', '航空集装器', '铁路货运列车', '短驳车'];
-const commonOperators = ['系统自动', '调度指挥中心', '站点操作员A', '司机王师傅', '现场班长李'];
+const vehicleTypes = ['货车', '航空', '铁路', '短驳'];
+const commonOperators = ['系统', '调度中心', '站点XYZ', '司机W', '班长L'];
+
 
 for (let i = 0; i < count; i++) {
   const id = count - i;
   const reverseIndexForTime = count - 1 - i;
   const updateTimestamp = generatePrimaryTimestamp(reverseIndexForTime, count);
-  const createOrderTime = generateFutureTimestamp(updateTimestamp, -168, -6); // Order created 6-168 hours before this status update
+  const createOrderTime = generateFutureTimestamp(updateTimestamp, -168, -6); // Order created before this status update
 
   const prevAddress = generateTrackingPointName();
   let currentAddress = generateTrackingPointName();
-  while (currentAddress === prevAddress && count > 1) { // Ensure different if possible
+  while (currentAddress === prevAddress && count > 1) {
       currentAddress = generateTrackingPointName();
   }
-  const nextAddress = generateTrackingPointName();
+  const nextAddressPlaceholder = Random.cword(2,3) + Random.pick(['中心','站','仓']);
 
 
-  const remark = Random.pick(trackingRemarks)
-                  .replace(/{location}/g, currentAddress) // Use global replace for multiple occurrences
-                  .replace('{next_location}', nextAddress)
-                  .replace('{delayHours}', Random.integer(1,6))
-                  .replace('{timePeriod}', Random.pick(['明日早班', '今日午后', Random.integer(2,5)+'小时内']))
-                  .replace('{vehicleType}', Random.pick(vehicleTypes));
+  const remark = Random.pick(trackingRemarksShort)
+                  .replace(/{loc}/g, Random.cword(2,3)) // Using placeholder for location in remark
+                  .replace('{nextLoc}', nextAddressPlaceholder)
+                  .replace('{time}', Random.pick(['明日', '今晚', Random.integer(1,3)+'h']))
+                  .replace('{veh}', Random.pick(vehicleTypes));
 
   list.push(Mock.mock({
     id: id,
-    orderNumber: `TRK${Random.date('yyMMdd')}${Random.string('number', 6)}`,
+    orderNumber: `T${Random.date('yyMM')}${Random.string('number', 4)}`, // Shorter: T24051234
     previousLocation: prevAddress,
     currentLocation: currentAddress,
-    currentLocationContactPerson: '@cname', // Kept for consistency if UI uses it
-    currentLocationContactPhone: /^1[3456789]\d{9}$/, // Kept for consistency
-    remarks: remark,
+    currentLocationContactPerson: '@cname(2,3)', // Shorter names
+    currentLocationContactPhone: /^1[3-9]\d{9}$/,
+    remarks: remark.substring(0, Random.integer(8, 20)), // Ensure remarks are concise
     createTime: formatTimestamp(createOrderTime),
     updateTime: formatTimestamp(updateTimestamp),
     operator: Random.pick(commonOperators)
@@ -109,8 +106,7 @@ module.exports = [
     response: config => {
       const { orderNumber, currentLocation, page = 1, limit = 20, sort } = config.query
       let mockList = list.filter(item => {
-        if (orderNumber && !item.orderNumber.includes(orderNumber)) return false
-        // For currentLocation, check if the generated string contains the query
+        if (orderNumber && !item.orderNumber.toLowerCase().includes(orderNumber.toLowerCase())) return false
         if (currentLocation && !item.currentLocation.toLowerCase().includes(currentLocation.toLowerCase())) return false
         return true
       })
@@ -155,12 +151,12 @@ module.exports = [
 
       const newItem = {
         id: maxId + 1,
-        orderNumber: data.orderNumber || `TRK${Random.date('yyMMdd')}${Random.string('number', 6)}`,
+        orderNumber: data.orderNumber || `T${Random.date('yyMM')}${Random.string('number', 4)}`,
         previousLocation: data.previousLocation || generateTrackingPointName(),
         currentLocation: data.currentLocation || generateTrackingPointName(),
-        currentLocationContactPerson: data.currentLocationContactPerson || Random.cname(),
+        currentLocationContactPerson: data.currentLocationContactPerson || Random.cname(2,3),
         currentLocationContactPhone: data.currentLocationContactPhone || `1${Random.string('number',10)}`,
-        remarks: data.remarks || `新追踪状态: 包裹已在 ${data.currentLocation || '新站点'} 处理。`,
+        remarks: data.remarks ? data.remarks.substring(0,20) : `新追踪: ${Random.pick(trackingRemarksShort).split(' ')[0]}`,
         createTime: formatTimestamp(createTimestamp),
         updateTime: formatTimestamp(updateTimestamp),
         operator: data.operator || Random.pick(commonOperators)
@@ -180,6 +176,9 @@ module.exports = [
         list[itemIndex] = { ...list[itemIndex], ...data };
         list[itemIndex].createTime = originalCreateTime;
         list[itemIndex].updateTime = formatTimestamp(Date.now());
+        if (list[itemIndex].remarks) {
+            list[itemIndex].remarks = list[itemIndex].remarks.substring(0, Random.integer(10,25));
+        }
         return { code: 20000, data: 'success', message: '更新成功' };
       }
       return { code: 50000, message: '记录未找到' };

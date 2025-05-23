@@ -1,17 +1,35 @@
 <template>
-  <div class="chart-page-container">
-    <div ref="chart" :class="className" :style="{height:height,width:width}" />
-  </div>
+  <div :class="className" :style="{height:height,width:width}" />
 </template>
 
 <script>
 import echarts from 'echarts'
 require('echarts/theme/macarons') // echarts theme
-import resize from '@/views/dashboard/admin/components/mixins/resize.js' // Corrected path
-import { getDomesticLedgerMonthlyAmountStats } from '@/api/dataAnalysis' // Swapped API call as per last routing change
+import resize from './mixins/resize'
+// Removed API import: import { getMonthlyInboundOrders } from '@/api/dataAnalysis'
+
+// Helper to generate last 24 months labels (YYYY-MM)
+function getLast24MonthsLabels() {
+  const months = []
+  const today = new Date()
+  for (let i = 23; i >= 0; i--) {
+    const d = new Date(today.getFullYear(), today.getMonth() - i, 1)
+    months.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`)
+  }
+  return months
+}
+
+const hardcodedInboundData = {
+  months: getLast24MonthsLabels(),
+  // Example hardcoded counts for 24 months. Replace with your desired static values.
+  counts: [
+    150, 160, 175, 180, 200, 190, 210, 220, 205, 195, 230, 240, // Last year
+    160, 170, 185, 190, 210, 200, 220, 230, 215, 205, 240, 250 // Current year up to current month (approx)
+  ]
+}
 
 export default {
-  name: 'LedgerMonthlyAmountPercentageChart', // Updated to reflect content
+  name: 'InboundMonthlyChart',
   mixins: [resize],
   props: {
     className: {
@@ -24,125 +42,104 @@ export default {
     },
     height: {
       type: String,
-      default: 'calc(100vh - 84px - 40px)'
+      default: '350px'
+    },
+    autoResize: {
+      type: Boolean,
+      default: true
     }
   },
   data() {
     return {
-      chart: null
+      chart: null,
+      chartData: hardcodedInboundData // Use hardcoded data
     }
   },
   mounted() {
-    this.initChart().then(() => {
-      if (this.chart && typeof this.initListener === 'function') {
-        this.initListener()
-      }
+    this.$nextTick(() => {
+      this.initChart()
     })
   },
   beforeDestroy() {
-    if (this.chart) {
-      this.chart.dispose()
-      this.chart = null
+    if (!this.chart) {
+      return
     }
+    this.chart.dispose()
+    this.chart = null
   },
   methods: {
-    async initChart() {
-      this.chart = echarts.init(this.$refs.chart, 'macarons')
-      this.chart.showLoading()
-
-      try {
-        const response = await getDomesticLedgerMonthlyAmountStats() // API for ledger amounts
-        const rawData = response.data
-
-        if (!rawData || !Array.isArray(rawData) || rawData.length === 0) {
-          this.chart.hideLoading()
-          this.chart.setOption({ title: { text: '近2年境内每月台账金额占比 (2023-2024)', subtext: '暂无数据', left: 'center' }}) // Updated title
-          return
+    // fetchData method is removed
+    initChart() {
+      this.chart = echarts.init(this.$el, 'macarons')
+      this.setOptions(this.chartData)
+    },
+    setOptions({ months, counts } = {}) {
+      if (!this.chart || !months || !counts || months.length === 0 || counts.length === 0) {
+        if (this.chart) {
+          this.chart.clear()
+          this.chart.setOption({
+            title: { text: '近2年每月入库订单数', subtext: '无数据显示', left: 'center' },
+            xAxis: { data: [] },
+            yAxis: {},
+            series: [{ type: 'bar', data: [] }]
+          })
         }
-
-        const yearlyData = {}
-        const targetYears = ['2023', '2024'] // Fixed years
-
-        targetYears.forEach(year => {
-          yearlyData[year] = { total: 0, amounts: Array(12).fill(0), originalAmounts: Array(12).fill(0) }
-        })
-
-        rawData.forEach(item => {
-          const year = item.month.substring(0, 4)
-          const month = item.month.substring(5, 7)
-          if (yearlyData[year]) {
-            yearlyData[year].amounts[parseInt(month, 10) - 1] = item.amount
-            yearlyData[year].originalAmounts[parseInt(month, 10) - 1] = item.amount
-            yearlyData[year].total += item.amount
+        return
+      }
+      this.chart.setOption({
+        title: {
+          text: '近2年每月入库订单数',
+          left: 'center'
+        },
+        xAxis: {
+          data: months,
+          boundaryGap: true,
+          axisTick: {
+            show: false
           }
-        })
-
-        const seriesData = []
-        const legendData = []
-        const xAxisData = Array.from({ length: 12 }, (_, i) => `${i + 1}月`)
-
-        targetYears.forEach(year => {
-          if (yearlyData[year] && yearlyData[year].total > 0) {
-            legendData.push(`${year}年金额占比`)
-            const percentages = yearlyData[year].amounts.map(amount =>
-              parseFloat(((amount / yearlyData[year].total) * 100).toFixed(2))
-            )
-            seriesData.push({
-              name: `${year}年金额占比`,
-              type: 'line',
-              smooth: true,
-              label: { show: true, position: 'top', formatter: '{c}%', fontSize: 10 },
-              areaStyle: { opacity: 0.3 },
-              emphasis: { focus: 'series' },
-              data: percentages
-            })
+        },
+        grid: {
+          left: 10,
+          right: 40, // Adjusted right margin for y-axis labels
+          bottom: 20,
+          top: 50, // Increased top margin for title
+          containLabel: true
+        },
+        tooltip: {
+          trigger: 'axis',
+          axisPointer: {
+            type: 'shadow' // Use 'shadow' for bar charts
+          },
+          padding: [5, 10]
+        },
+        yAxis: {
+          name: '订单数',
+          type: 'value', // Ensure yAxis type is value
+          axisTick: {
+            show: false
           }
-        })
-
-        this.chart.hideLoading()
-        this.chart.setOption({
-          title: { text: '近2年境内每月台账金额占比 (2023-2024)', left: 'center', textStyle: { fontSize: 16, fontWeight: 'bold' }}, // Updated title
-          tooltip: {
-            trigger: 'axis',
-            axisPointer: { type: 'cross', label: { backgroundColor: '#6a7985' }},
-            formatter: function(params) {
-              let tooltip = params[0].name + '<br/>'
-              params.forEach(item => {
-                const year = item.seriesName.substring(0, 4)
-                const monthIndex = parseInt(item.name.replace('月', ''), 10) - 1
-                const originalAmount = yearlyData[year] ? yearlyData[year].originalAmounts[monthIndex] : 0
-                tooltip += `${item.marker}${item.seriesName}: ${item.value}% (¥${originalAmount.toFixed(2)})<br/>`
-              })
-              return tooltip
+        },
+        legend: {
+          data: ['入库订单数'],
+          left: 'right',
+          top: '10px' // Adjust legend position
+        },
+        series: [{
+          name: '入库订单数',
+          itemStyle: {
+            normal: {
+              color: '#3888fa',
+              barBorderRadius: [3, 3, 0, 0] // Optional: rounded corners for bars
             }
           },
-          legend: { data: legendData, bottom: 5, type: 'scroll' },
-          grid: { left: '3%', right: '4%', bottom: '12%', containLabel: true },
-          xAxis: [{ type: 'category', boundaryGap: false, data: xAxisData, axisLabel: { interval: 0, rotate: 30 }}],
-          yAxis: [{ type: 'value', name: '占比 (%)', axisLabel: { formatter: '{value}%' }, max: 100, min: 0 }],
-          series: seriesData,
-          dataZoom: [{ type: 'slider', start: 0, end: 100, xAxisIndex: 0, bottom: 40 }]
-        })
-      } catch (error) {
-        this.chart.hideLoading()
-        console.error('获取台账金额占比数据失败:', error) // Updated error message
-        this.chart.setOption({ title: { text: '近2年境内每月台账金额占比 (2023-2024)', subtext: '数据加载失败', left: 'center' }}) // Updated title
-      }
+          type: 'bar',
+          data: counts,
+          barMaxWidth: '40%',
+          animationDuration: 2800,
+          animationEasing: 'cubicInOut'
+        }]
+      })
     }
   }
 }
 </script>
-
-<style scoped>
-.chart-page-container {
-  padding: 20px;
-  width: 100%;
-  height: calc(100vh - 84px - 40px); /* 示例高度，请根据实际布局调整 */
-  box-sizing: border-box;
-  background-color: #fff;
-}
-.chart {
-  width: 100%;
-  height: 100%;
-}
-</style>

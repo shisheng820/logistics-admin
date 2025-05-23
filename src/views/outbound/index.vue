@@ -304,7 +304,7 @@ export default {
         excel.export_json_to_excel({
           header: tHeader,
           data,
-          filename: '出库列表-' + parseTime(new Date(), '{y}{m}{d}{h}{i}{s}')
+          filename: '出库管理-' + parseTime(new Date(), '{y}{m}{d}{h}{i}{s}')
         })
         this.downloadLoading = false
       })

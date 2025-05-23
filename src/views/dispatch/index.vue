@@ -178,9 +178,9 @@ export default {
         this.total = response.data.total
         this.listLoading = false
       }).catch(err => {
-        console.error('获取调度列表失败:', err)
+        console.error('获取智能调度失败:', err)
         this.$message({
-          message: '获取调度列表失败: ' + (err.message || '未知错误'),
+          message: '获取智能调度失败: ' + (err.message || '未知错误'),
           type: 'error',
           duration: 5 * 1000
         })

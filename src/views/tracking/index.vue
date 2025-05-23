@@ -276,7 +276,7 @@ export default {
         excel.export_json_to_excel({
           header: tHeader,
           data,
-          filename: '追踪列表-' + parseTime(new Date(), '{y}{m}{d}{h}{i}{s}')
+          filename: '监控与追踪-' + parseTime(new Date(), '{y}{m}{d}{h}{i}{s}')
         })
         this.downloadLoading = false
       })

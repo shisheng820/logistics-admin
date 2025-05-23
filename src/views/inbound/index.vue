@@ -92,7 +92,7 @@
     <pagination v-show="total>0" :total="total" :page.sync="listQuery.page" :limit.sync="listQuery.limit" @pagination="getList" />
 
     <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible">
-      <el-form ref="dataForm" :rules="rules" :model="temp" label-position="left" label-width="110px" style="width: 420px; margin-left:50px;"> {/* Adjusted label-width and form width */}
+      <el-form ref="dataForm" :rules="rules" :model="temp" label-position="left" label-width="110px" style="width: 420px; margin-left:50px;">
         <el-form-item label="订单编号" prop="orderNumber">
           <el-input v-model="temp.orderNumber" />
         </el-form-item>
@@ -315,7 +315,7 @@ export default {
         excel.export_json_to_excel({
           header: tHeader,
           data,
-          filename: '入库列表-' + parseTime(new Date(), '{y}{m}{d}{h}{i}{s}')
+          filename: '入库管理-' + parseTime(new Date(), '{y}{m}{d}{h}{i}{s}')
         })
         this.downloadLoading = false
       })

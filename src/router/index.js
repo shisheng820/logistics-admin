@@ -57,7 +57,7 @@ export const asyncRoutes = [
         path: 'list',
         name: 'InboundList',
         component: () => import('@/views/inbound/index'),
-        meta: { title: '入库列表', icon: 'el-icon-tickets' }
+        meta: { title: '入库管理', icon: 'el-icon-tickets' }
       }
     ]
   },
@@ -72,7 +72,7 @@ export const asyncRoutes = [
         path: 'list',
         name: 'OutboundList',
         component: () => import('@/views/outbound/index'),
-        meta: { title: '出库列表', icon: 'el-icon-document-checked' }
+        meta: { title: '出库管理', icon: 'el-icon-document-checked' }
       }
     ]
   },
@@ -87,7 +87,7 @@ export const asyncRoutes = [
         path: 'list',
         name: 'DispatchList',
         component: () => import('@/views/dispatch/index'),
-        meta: { title: '调度列表', icon: 'el-icon-s-order' }
+        meta: { title: '智能调度', icon: 'el-icon-s-order' }
       }
     ]
   },
@@ -102,7 +102,7 @@ export const asyncRoutes = [
         path: 'list',
         name: 'SupplyChainList',
         component: () => import('@/views/supplychain/index'),
-        meta: { title: '供应商列表', icon: 'el-icon-office-building' }
+        meta: { title: '供应链管理', icon: 'el-icon-office-building' }
       }
     ]
   },
@@ -117,7 +117,7 @@ export const asyncRoutes = [
         path: 'list',
         name: 'TrackingList',
         component: () => import('@/views/tracking/index'),
-        meta: { title: '追踪列表', icon: 'el-icon-location' }
+        meta: { title: '监控与追踪', icon: 'el-icon-location' }
       }
     ]
   },

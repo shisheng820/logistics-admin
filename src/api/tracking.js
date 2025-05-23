@@ -1,6 +1,6 @@
 import request from '@/utils/request'
 
-// 获取监控与追踪列表
+// 获取监控与监控与追踪
 export function fetchTrackingList(query) {
   return request({
     url: '/tracking/list',

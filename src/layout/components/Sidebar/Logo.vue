@@ -30,7 +30,7 @@ export default {
   data() {
     return {
       title: defaultSettings.title, // 使用 settings.js 中的标题
-      shortTitle: '游艇系统', // 定义一个短标题用于折叠状态，或者只显示图标
+      shortTitle: '物流', // 定义一个短标题用于折叠状态，或者只显示图标
       // logo: logoImg // 使用导入的logo图片
       // 如果不想用图片logo, 可以将 logo 设置为 null 或删除相关img标签，只显示 title
       logo: null

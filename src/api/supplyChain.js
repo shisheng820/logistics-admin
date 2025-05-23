@@ -1,6 +1,6 @@
 import request from '@/utils/request'
 
-// 获取供应链/供应商列表
+// 获取供应链/供应链管理
 export function fetchSupplyChainList(query) {
   return request({
     url: '/supplychain/list',

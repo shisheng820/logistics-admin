@@ -1,6 +1,6 @@
 import request from '@/utils/request'
 
-// 获取入库列表
+// 获取入库管理
 export function fetchInboundList(query) {
   return request({
     url: '/inbound/list',

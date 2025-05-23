@@ -10,7 +10,7 @@ require('echarts/theme/macarons') // 保留你喜欢的主题
 import resize from './mixins/resize'
 import { getOutboundDomesticMonthlyProportion } from '@/api/dataAnalysis'
 
-const animationDuration = 2800 // 保留上一版的美化动画时间
+const animationDuration = 10 // 保留上一版的美化动画时间
 
 export default {
   name: 'OutboundDomesticMonthlyChart',

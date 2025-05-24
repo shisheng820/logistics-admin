@@ -97,7 +97,7 @@
         </el-form-item>
         <el-form-item label="调度时间" prop="dispatchTime">
           <el-date-picker
-            v-model="temp.inboundTime"
+            v-model="temp.dispatchTime"
             type="datetime"
             placeholder="选择日期时间"
             format="yyyy-MM-dd HH:mm:ss"
@@ -154,8 +154,8 @@ export default {
         cargoDetails: '',
         originalShelfNumber: '',
         newShelfNumber: '',
-        dispatchTime: null,
-        operator: ''
+        dispatchTime: parseTime(new Date(), '{y}-{m}-{d} {h}:{i}:{s}'),
+        operator: this.$store.getters.name || '' // Default to logged-in user if available
       },
       dialogFormVisible: false,
       dialogStatus: '',

@@ -51,19 +51,19 @@
           <span>{{ row.shelfNumber }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="出库日期" prop="outboundTime" sortable="custom" width="110px" align="center" :class-name="getSortClass('outboundTime')">
+      <el-table-column label="出库日期" prop="outboundTime" sortable="custom" width="102px" align="center" :class-name="getSortClass('outboundTime')">
         <template slot-scope="{row}">
-          <span>{{ row.outboundTime | parseTime('{y}-{m}-{d}') }}</span>
+          <span>{{ row.outboundTime | parseTime('{y}-{m}-{d} {h}:{i}:{s}') }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="新增日期" prop="createTime" sortable="custom" width="110px" align="center" :class-name="getSortClass('createTime')">
+      <el-table-column label="新增日期" prop="createTime" sortable="custom" width="102px" align="center" :class-name="getSortClass('createTime')">
         <template slot-scope="{row}">
-          <span>{{ row.createTime | parseTime('{y}-{m}-{d}') }}</span>
+          <span>{{ row.createTime | parseTime('{y}-{m}-{d} {h}:{i}:{s}') }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="修改日期" prop="updateTime" sortable="custom" width="110px" align="center" :class-name="getSortClass('updateTime')">
+      <el-table-column label="修改日期" prop="updateTime" sortable="custom" width="102px" align="center" :class-name="getSortClass('updateTime')">
         <template slot-scope="{row}">
-          <span>{{ row.updateTime | parseTime('{y}-{m}-{d}') }}</span>
+          <span>{{ row.updateTime | parseTime('{y}-{m}-{d} {h}:{i}:{s}') }}</span>
         </template>
       </el-table-column>
       <el-table-column label="操作员" prop="operator" width="80px" align="center">
@@ -162,7 +162,7 @@ export default {
         address: '',
         cargoDetails: '',
         shelfNumber: '',
-        outboundTime: parseTime(new Date(), '{y}-{m}-{d}'),
+        outboundTime: parseTime(new Date(), '{y}-{m}-{d} {h}:{i}:{s}'),
         // createTime and updateTime are not part of the form temp object
         operator: ''
       },
@@ -208,7 +208,7 @@ export default {
         address: '',
         cargoDetails: '',
         shelfNumber: '',
-        outboundTime: parseTime(new Date(), '{y}-{m}-{d}'),
+        outboundTime: parseTime(new Date(), '{y}-{m}-{d} {h}:{i}:{s}'),
         operator: this.$store.getters.name || ''
       }
     },
@@ -243,7 +243,7 @@ export default {
     handleUpdate(row) {
       this.temp = Object.assign({}, row)
       if (this.temp.outboundTime) {
-        this.temp.outboundTime = parseTime(this.temp.outboundTime, '{y}-{m}-{d}')
+        this.temp.outboundTime = parseTime(this.temp.outboundTime, '{y}-{m}-{d} {h}:{i}:{s}')
       }
       // createTime and updateTime are not directly edited in the form
       this.dialogStatus = 'update'
@@ -313,7 +313,7 @@ export default {
       const listToFormat = this.list || []
       return listToFormat.map(v => filterVal.map(j => {
         if (j === 'outboundTime' || j === 'createTime' || j === 'updateTime') {
-          return parseTime(v[j], '{y}-{m}-{d}')
+          return parseTime(v[j], '{y}-{m}-{d} {h}:{i}:{s}')
         } else {
           return v[j]
         }

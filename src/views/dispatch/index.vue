@@ -47,19 +47,19 @@
           <span>{{ row.newShelfNumber }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="调度时间" width="110px" align="center" prop="dispatchTime" sortable="custom" :class-name="getSortClass('dispatchTime')">
+      <el-table-column label="调度时间" width="102px" align="center" prop="dispatchTime" sortable="custom" :class-name="getSortClass('dispatchTime')">
         <template slot-scope="{row}">
-          <span>{{ row.dispatchTime | parseTime('{y}-{m}-{d}') }}</span>
+          <span>{{ row.dispatchTime | parseTime('{y}-{m}-{d} {h}:{i}:{s}') }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="新增时间" width="110px" align="center" prop="createTime" sortable="custom" :class-name="getSortClass('createTime')">
+      <el-table-column label="新增时间" width="102px" align="center" prop="createTime" sortable="custom" :class-name="getSortClass('createTime')">
         <template slot-scope="{row}">
-          <span>{{ row.createTime | parseTime('{y}-{m}-{d}') }}</span>
+          <span>{{ row.createTime | parseTime('{y}-{m}-{d} {h}:{i}:{s}') }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="修改时间" width="110px" align="center" prop="updateTime" sortable="custom" :class-name="getSortClass('updateTime')">
+      <el-table-column label="修改时间" width="102px" align="center" prop="updateTime" sortable="custom" :class-name="getSortClass('updateTime')">
         <template slot-scope="{row}">
-          <span>{{ row.updateTime | parseTime('{y}-{m}-{d}') }}</span>
+          <span>{{ row.updateTime | parseTime('{y}-{m}-{d} {h}:{i}:{s}') }}</span>
         </template>
       </el-table-column>
       <el-table-column label="操作员" width="100px" align="center">
@@ -212,7 +212,7 @@ export default {
     },
     handleCreate() {
       this.resetTemp()
-      this.temp.dispatchTime = parseTime(new Date(), '{y}-{m}-{d}')
+      this.temp.dispatchTime = parseTime(new Date(), '{y}-{m}-{d} {h}:{i}:{s}')
       this.dialogStatus = 'create'
       this.dialogFormVisible = true
       this.$nextTick(() => {
@@ -248,7 +248,7 @@ export default {
     handleUpdate(row) {
       this.temp = Object.assign({}, row)
       if (this.temp.dispatchTime) {
-        this.temp.dispatchTime = parseTime(this.temp.dispatchTime, '{y}-{m}-{d}')
+        this.temp.dispatchTime = parseTime(this.temp.dispatchTime, '{y}-{m}-{d} {h}:{i}:{s}')
       }
       this.dialogStatus = 'update'
       this.dialogFormVisible = true

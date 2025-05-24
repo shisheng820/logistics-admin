@@ -57,19 +57,19 @@
           <span>{{ row.shelfNumber }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="入库日期" prop="inboundTime" sortable="custom" width="110px" align="center" :class-name="getSortClass('inboundTime')">
+      <el-table-column label="入库日期" prop="inboundTime" sortable="custom" width="102px" align="center" :class-name="getSortClass('inboundTime')">
         <template slot-scope="{row}">
-          <span>{{ row.inboundTime | parseTime('{y}-{m}-{d}') }}</span>
+          <span>{{ row.inboundTime | parseTime('{y}-{m}-{d} {h}:{i}:{s}') }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="新增日期" prop="createTime" sortable="custom" width="110px" align="center" :class-name="getSortClass('createTime')">
+      <el-table-column label="新增日期" prop="createTime" sortable="custom" width="102px" align="center" :class-name="getSortClass('createTime')">
         <template slot-scope="{row}">
-          <span>{{ row.createTime | parseTime('{y}-{m}-{d}') }}</span>
+          <span>{{ row.createTime | parseTime('{y}-{m}-{d} {h}:{i}:{s}') }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="修改日期" prop="updateTime" sortable="custom" width="110px" align="center" :class-name="getSortClass('updateTime')">
+      <el-table-column label="修改日期" prop="updateTime" sortable="custom" width="102px" align="center" :class-name="getSortClass('updateTime')">
         <template slot-scope="{row}">
-          <span>{{ row.updateTime | parseTime('{y}-{m}-{d}') }}</span>
+          <span>{{ row.updateTime | parseTime('{y}-{m}-{d} {h}:{i}:{s}') }}</span>
         </template>
       </el-table-column>
       <el-table-column label="操作员" prop="operator" width="80px" align="center">
@@ -168,7 +168,7 @@ export default {
         address: '',
         cargoDetails: '', // 货物详情备注
         shelfNumber: '', // 货架编号
-        inboundTime: parseTime(new Date(), '{y}-{m}-{d}'), // 入库时间
+        inboundTime: parseTime(new Date(), '{y}-{m}-{d} {h}:{i}:{s}'), // 入库时间
         // createTime and updateTime will be handled by mock/backend
         operator: ''
       },
@@ -214,7 +214,7 @@ export default {
         address: '',
         cargoDetails: '',
         shelfNumber: '',
-        inboundTime: parseTime(new Date(), '{y}-{m}-{d}'),
+        inboundTime: parseTime(new Date(), '{y}-{m}-{d} {h}:{i}:{s}'),
         operator: this.$store.getters.name || '' // Default to logged-in user if available
       }
     },
@@ -254,7 +254,7 @@ export default {
       this.temp = Object.assign({}, row) // copy obj
       // Ensure inboundTime is formatted as 'yyyy-MM-dd' for the date picker
       if (this.temp.inboundTime) {
-        this.temp.inboundTime = parseTime(this.temp.inboundTime, '{y}-{m}-{d}')
+        this.temp.inboundTime = parseTime(this.temp.inboundTime, '{y}-{m}-{d} {h}:{i}:{s}')
       }
       this.dialogStatus = 'update'
       this.dialogFormVisible = true
@@ -324,7 +324,7 @@ export default {
       const listToFormat = this.list || []
       return listToFormat.map(v => filterVal.map(j => {
         if (j === 'inboundTime' || j === 'createTime' || j === 'updateTime') {
-          return parseTime(v[j], '{y}-{m}-{d}') // Format all dates to date-only for export
+          return parseTime(v[j], '{y}-{m}-{d} {h}:{i}:{s}') // Format all dates to date-only for export
         } else {
           return v[j]
         }

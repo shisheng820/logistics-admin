@@ -38,7 +38,7 @@
       </el-table-column>
       <el-table-column label="时间戳" prop="timestamp" sortable="custom" width="160px" align="center" :class-name="getSortClass('timestamp')"> {/* Adjusted width */}
         <template slot-scope="{row}">
-          <span>{{ row.timestamp | parseTime('{y}-{m}-{d} {h}:{i}:{s} {h}:{i}:{s}') }}</span>
+          <span>{{ row.timestamp | parseTime('{y}-{m}-{d} {h}:{i}:{s}') }}</span>
         </template>
       </el-table-column>
       <el-table-column label="用户名" prop="username" width="100px" align="center" :show-overflow-tooltip="true"> {/* Adjusted width & added tooltip */}

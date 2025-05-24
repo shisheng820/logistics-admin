@@ -107,10 +107,11 @@
         </el-form-item>
         <el-form-item label="出库日期" prop="outboundTime">
           <el-date-picker
-            v-model="temp.outboundTime"
-            type="date"
-            placeholder="选择日期"
-            value-format="yyyy-MM-dd"
+            v-model="temp.inboundTime"
+            type="datetime"
+            placeholder="选择日期时间"
+            format="yyyy-MM-dd HH:mm:ss"
+            value-format="yyyy-MM-dd HH:mm:ss"
             style="width:100%"
           />
         </el-form-item>

@@ -114,9 +114,10 @@
         <el-form-item label="入库日期" prop="inboundTime">
           <el-date-picker
             v-model="temp.inboundTime"
-            type="date"
-            placeholder="请选择日期"
-            value-format="yyyy-MM-dd"
+            type="datetime"
+            placeholder="选择日期时间"
+            format="yyyy-MM-dd HH:mm:ss"
+            value-format="yyyy-MM-dd HH:mm:ss"
             style="width:100%"
           />
         </el-form-item>

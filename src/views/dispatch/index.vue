@@ -96,7 +96,14 @@
           <el-input v-model="temp.cargoDetails" type="textarea" :rows="3" placeholder="请输入货物详情及备注" />
         </el-form-item>
         <el-form-item label="调度时间" prop="dispatchTime">
-          <el-date-picker v-model="temp.dispatchTime" type="date" placeholder="选择日期" value-format="yyyy-MM-dd" style="width:100%;" />
+          <el-date-picker
+            v-model="temp.inboundTime"
+            type="datetime"
+            placeholder="选择日期时间"
+            format="yyyy-MM-dd HH:mm:ss"
+            value-format="yyyy-MM-dd HH:mm:ss"
+            style="width:100%"
+          />
         </el-form-item>
         <el-form-item label="操作员" prop="operator">
           <el-input v-model="temp.operator" />
